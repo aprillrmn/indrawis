@@ -49,7 +49,7 @@ class ReligiScreen extends StatelessWidget {
                             imageUrl: '',
                             latitude: 0,
                             longitude: 0,
-                            kontenId: null,
+                            kontenId: 0,
                             heroTag: '',
                           ),
                     ),

@@ -5,7 +5,7 @@ class Konten {
   final String? lokasi;
   final double? latitude;
   final double? longitude;
-  final double? distance; // jarak dari user
+  final double? distance; 
 
   Konten({
     required this.id,

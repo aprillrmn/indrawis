@@ -31,7 +31,7 @@ class _MyHomeScreenState extends State<MyHomeScreen> {
     try {
       final response = await Supabase.instance.client
           .from('konten')
-          .select('id, judul, deskripsi, latitude, longitude');
+          .select('id, judul, deskripsi, gambar_url, latitude, longitude');
 
       setState(() {
         _destinations = List<Map<String, dynamic>>.from(response);
@@ -85,8 +85,8 @@ class _MyHomeScreenState extends State<MyHomeScreen> {
       d['distance'] = Geolocator.distanceBetween(
         _currentPosition!.latitude,
         _currentPosition!.longitude,
-        (d['latitude'] ?? 0).toDouble(),
-        (d['longitude'] ?? 0).toDouble(),
+        double.tryParse(d['latitude'].toString()) ?? 0.0,
+        double.tryParse(d['longitude'].toString()) ?? 0.0,
       );
     }
 
@@ -128,8 +128,10 @@ class _MyHomeScreenState extends State<MyHomeScreen> {
                 onPressed:
                     () => _openRoute(
                       LatLng(
-                        (destination['latitude'] ?? 0).toDouble(),
-                        (destination['longitude'] ?? 0).toDouble(),
+                        double.tryParse(destination['latitude'].toString()) ??
+                            0.0,
+                        double.tryParse(destination['longitude'].toString()) ??
+                            0.0,
                       ),
                     ),
                 icon: const Icon(Icons.directions),
@@ -243,8 +245,8 @@ class _MyHomeScreenState extends State<MyHomeScreen> {
                   (d) => Marker(
                     markerId: MarkerId('${d['id']}'),
                     position: LatLng(
-                      (d['latitude'] ?? 0).toDouble(),
-                      (d['longitude'] ?? 0).toDouble(),
+                      double.tryParse(d['latitude'].toString()) ?? 0.0,
+                      double.tryParse(d['longitude'].toString()) ?? 0.0,
                     ),
                     infoWindow: InfoWindow(
                       title: d['judul'],
@@ -286,7 +288,7 @@ class _MyHomeScreenState extends State<MyHomeScreen> {
                 separatorBuilder: (_, __) => const SizedBox(height: 8),
                 itemBuilder: (_, i) {
                   final d = list[i];
-                  final imgUrl = d['gambar_url'] ?? '';
+                  final imgUrl = (d['gambar_url'] ?? '').toString();
 
                   return InkWell(
                     onTap: () {
@@ -295,13 +297,19 @@ class _MyHomeScreenState extends State<MyHomeScreen> {
                         MaterialPageRoute(
                           builder:
                               (context) => DestinationDetailScreen(
-                                kontenId: d['id'] ?? 0,
+                                kontenId: int.tryParse(d['id'].toString()) ?? 0,
                                 heroTag: 'hero_${d['id']}',
                                 title: d['judul'] ?? '',
                                 description: d['deskripsi'] ?? '',
-                                imageUrl: d['gambar_url'] ?? '',
-                                latitude: d['latitude']?.toDouble() ?? 0.0,
-                                longitude: d['longitude']?.toDouble() ?? 0.0,
+                                imageUrl: imgUrl,
+                                latitude:
+                                    double.tryParse(d['latitude'].toString()) ??
+                                    0.0,
+                                longitude:
+                                    double.tryParse(
+                                      d['longitude'].toString(),
+                                    ) ??
+                                    0.0,
                                 destination: {},
                               ),
                         ),
@@ -329,17 +337,41 @@ class _MyHomeScreenState extends State<MyHomeScreen> {
                                           width: 80,
                                           height: 80,
                                           fit: BoxFit.cover,
-                                          errorBuilder:
-                                              (c, e, s) => Container(
-                                                width: 80,
-                                                height: 80,
-                                                color: Colors.grey.shade300,
-                                                child: const Icon(
-                                                  Icons.broken_image,
-                                                  size: 40,
-                                                  color: Colors.grey,
-                                                ),
+                                          loadingBuilder: (
+                                            context,
+                                            child,
+                                            loadingProgress,
+                                          ) {
+                                            if (loadingProgress == null)
+                                              return child;
+                                            return Container(
+                                              width: 80,
+                                              height: 80,
+                                              color: Colors.grey.shade200,
+                                              child: const Center(
+                                                child:
+                                                    CircularProgressIndicator(
+                                                      strokeWidth: 2,
+                                                    ),
                                               ),
+                                            );
+                                          },
+                                          errorBuilder: (
+                                            context,
+                                            error,
+                                            stackTrace,
+                                          ) {
+                                            return Container(
+                                              width: 80,
+                                              height: 80,
+                                              color: Colors.grey.shade300,
+                                              child: const Icon(
+                                                Icons.broken_image,
+                                                size: 40,
+                                                color: Colors.grey,
+                                              ),
+                                            );
+                                          },
                                         ),
                                       )
                                       : Container(
@@ -376,7 +408,8 @@ class _MyHomeScreenState extends State<MyHomeScreen> {
                                     ),
                                   ),
                                   const SizedBox(height: 6),
-                                  if (_currentPosition != null)
+                                  if (_currentPosition != null &&
+                                      d.containsKey('distance'))
                                     Text(
                                       '${(d['distance'] / 1000).toStringAsFixed(2)} km dari posisi Anda',
                                       style: TextStyle(

@@ -115,8 +115,8 @@ class MyApp extends StatelessWidget {
                   latitude: args['latitude'] as double,
                   longitude: args['longitude'] as double,
                   heroTag: '',
-                  kontenId: null,
                   destination: {},
+                  kontenId: 0,
                 ),
           );
         }

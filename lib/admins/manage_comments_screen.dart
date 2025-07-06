@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:new_apk/models/coment_model.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../models/coment_model.dart';
 
 class ManageCommentsScreen extends StatefulWidget {
   const ManageCommentsScreen({super.key});
@@ -27,20 +27,10 @@ class _ManageCommentsScreenState extends State<ManageCommentsScreen> {
           .select()
           .order('tanggal', ascending: false);
 
-      final data = response as List;
-
       setState(() {
         commentList =
-            data
-                .map(
-                  (item) => CommentModel(
-                    id: item['id'].toString(),
-                    nama: item['nama'] ?? '',
-                    isi: item['isi'] ?? '',
-                    tanggal: DateTime.parse(item['tanggal']),
-                    foto: item['foto'] ?? '',
-                  ),
-                )
+            (response as List)
+                .map((item) => CommentModel.fromJson(item))
                 .toList();
         isLoading = false;
       });
@@ -54,7 +44,7 @@ class _ManageCommentsScreenState extends State<ManageCommentsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    List<CommentModel> sortedList = List.from(commentList);
+    final sortedList = [...commentList];
     sortedList.sort(
       (a, b) =>
           _sortTerbaru
@@ -70,6 +60,8 @@ class _ManageCommentsScreenState extends State<ManageCommentsScreen> {
       body:
           isLoading
               ? const Center(child: CircularProgressIndicator())
+              : commentList.isEmpty
+              ? const Center(child: Text('Belum ada komentar'))
               : Column(
                 children: [
                   Padding(
@@ -121,24 +113,57 @@ class _ManageCommentsScreenState extends State<ManageCommentsScreen> {
                             ),
                             child: Padding(
                               padding: const EdgeInsets.all(16),
-                              child: Column(
+                              child: Row(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text(
-                                    komentar.nama,
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 16,
+                                  Container(
+                                    width: 48,
+                                    height: 48,
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(8),
+                                      color: Colors.grey[300],
+                                      image:
+                                          komentar.foto.isNotEmpty
+                                              ? DecorationImage(
+                                                image: NetworkImage(
+                                                  komentar.foto,
+                                                ),
+                                                fit: BoxFit.cover,
+                                              )
+                                              : null,
                                     ),
+                                    child:
+                                        (komentar.foto.isEmpty)
+                                            ? const Icon(
+                                              Icons.person,
+                                              color: Colors.white,
+                                            )
+                                            : null,
                                   ),
-                                  const SizedBox(height: 8),
-                                  Text(komentar.isi),
-                                  const SizedBox(height: 8),
-                                  Text(
-                                    _formatTanggal(komentar.tanggal),
-                                    style: const TextStyle(
-                                      fontSize: 12,
-                                      color: Colors.grey,
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          komentar.nama,
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 16,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Text(komentar.isi),
+                                        const SizedBox(height: 8),
+                                        Text(
+                                          _formatTanggal(komentar.tanggal),
+                                          style: const TextStyle(
+                                            fontSize: 12,
+                                            color: Colors.grey,
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ),
                                 ],
@@ -155,6 +180,10 @@ class _ManageCommentsScreenState extends State<ManageCommentsScreen> {
   }
 
   String _formatTanggal(DateTime tanggal) {
-    return "${tanggal.day}/${tanggal.month}/${tanggal.year} ${tanggal.hour}:${tanggal.minute.toString().padLeft(2, '0')}";
+    return "${tanggal.day.toString().padLeft(2, '0')}/"
+        "${tanggal.month.toString().padLeft(2, '0')}/"
+        "${tanggal.year} "
+        "${tanggal.hour.toString().padLeft(2, '0')}:"
+        "${tanggal.minute.toString().padLeft(2, '0')}";
   }
 }
