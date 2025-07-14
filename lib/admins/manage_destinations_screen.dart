@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:another_flushbar/flushbar.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:new_apk/locations/map_picker_screen.dart';
@@ -110,6 +111,30 @@ class _ManageDestinationsScreenState extends State<ManageDestinationsScreen> {
 
                 Navigator.pop(context);
                 _fetchDestinations();
+                Flushbar(
+                  margin: const EdgeInsets.all(16),
+                  borderRadius: BorderRadius.circular(16),
+                  backgroundColor: Colors.green.withOpacity(0.7),
+                  boxShadows: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.2),
+                      offset: Offset(0, 2),
+                      blurRadius: 4,
+                    ),
+                  ],
+                  icon: const Icon(
+                    Icons.check_circle,
+                    color: Colors.white,
+                    size: 28,
+                  ),
+                  messageText: const Text(
+                    'Destinasi berhasil disimpan',
+                    style: TextStyle(color: Colors.white, fontSize: 16),
+                  ),
+                  duration: const Duration(seconds: 3),
+                  flushbarPosition: FlushbarPosition.TOP,
+                  animationDuration: const Duration(milliseconds: 500),
+                ).show(context);
               }
 
               return Padding(
@@ -171,29 +196,68 @@ class _ManageDestinationsScreenState extends State<ManageDestinationsScreen> {
                         ),
                       ),
                       const SizedBox(height: 12),
-                      ElevatedButton.icon(
-                        onPressed: () async {
-                          final result = await Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => MapPickerScreen(),
+                      Container(
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [Colors.teal, Colors.greenAccent],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          borderRadius: BorderRadius.circular(12),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.teal.withOpacity(0.4),
+                              spreadRadius: 2,
+                              blurRadius: 8,
+                              offset: const Offset(0, 4),
                             ),
-                          );
-                          if (result != null) {
-                            setModalState(() {
-                              selectedLat = result['lat'];
-                              selectedLng = result['lng'];
-                              _lokasiController.text =
-                                  'Lat: ${selectedLat!.toStringAsFixed(5)}, Lng: ${selectedLng!.toStringAsFixed(5)}';
-                            });
-                          }
-                        },
-                        icon: const Icon(Icons.map),
-                        label: const Text('Pilih Lokasi di Peta'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.teal,
-                          shape: RoundedRectangleBorder(
+                          ],
+                        ),
+                        child: Material(
+                          color: Colors.transparent,
+                          child: InkWell(
                             borderRadius: BorderRadius.circular(12),
+                            onTap: () async {
+                              final result = await Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => MapPickerScreen(),
+                                ),
+                              );
+                              if (result != null) {
+                                setModalState(() {
+                                  selectedLat = result['lat'];
+                                  selectedLng = result['lng'];
+                                  _lokasiController.text =
+                                      'Lat: ${selectedLat!.toStringAsFixed(5)}, Lng: ${selectedLng!.toStringAsFixed(5)}';
+                                });
+                              }
+                            },
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 80,
+                                vertical: 14,
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: const [
+                                  Icon(
+                                    Icons.map,
+                                    color: Colors.white,
+                                    size: 28,
+                                  ),
+                                  SizedBox(width: 12),
+                                  Text(
+                                    'Pilih Lokasi di Peta',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
                           ),
                         ),
                       ),
@@ -216,7 +280,21 @@ class _ManageDestinationsScreenState extends State<ManageDestinationsScreen> {
                                       fit: BoxFit.cover,
                                     ),
                                   )
-                                  : const Center(child: Text('Pilih Gambar')),
+                                  : const Center(
+                                    child: Column(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Icon(
+                                          Icons.photo_library,
+                                          size: 36,
+                                          color: Colors.grey,
+                                        ),
+                                        SizedBox(height: 8),
+                                        Text('Pilih Gambar di Galeri'),
+                                      ],
+                                    ),
+                                  ),
                         ),
                       ),
                       const SizedBox(height: 16),
@@ -227,13 +305,19 @@ class _ManageDestinationsScreenState extends State<ManageDestinationsScreen> {
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
-                        ),
-                        child: const Padding(
-                          padding: EdgeInsets.symmetric(
+                          padding: const EdgeInsets.symmetric(
                             horizontal: 20,
-                            vertical: 12,
+                            vertical: 14,
                           ),
-                          child: Text('Simpan'),
+                        ),
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.save, size: 20),
+                            SizedBox(width: 8),
+                            Text('Simpan'),
+                          ],
                         ),
                       ),
                     ],
@@ -249,9 +333,26 @@ class _ManageDestinationsScreenState extends State<ManageDestinationsScreen> {
     setState(() => isLoading = true);
     try {
       await supabase.from('konten').delete().eq('id', dest['id']);
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('${dest['judul']} dihapus')));
+      Flushbar(
+        margin: const EdgeInsets.all(16),
+        borderRadius: BorderRadius.circular(16),
+        backgroundColor: Colors.green.withOpacity(0.7),
+        boxShadows: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.2),
+            offset: Offset(0, 2),
+            blurRadius: 4,
+          ),
+        ],
+        icon: const Icon(Icons.check_circle, color: Colors.white, size: 28),
+        messageText: const Text(
+          'Destinasi berhasil dihapus',
+          style: TextStyle(color: Colors.white, fontSize: 16),
+        ),
+        duration: const Duration(seconds: 3),
+        flushbarPosition: FlushbarPosition.TOP,
+        animationDuration: const Duration(milliseconds: 500),
+      ).show(context);
       await _fetchDestinations(); // ambil data terbaru
     } catch (e) {
       ScaffoldMessenger.of(
