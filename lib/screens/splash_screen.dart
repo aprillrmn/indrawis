@@ -50,7 +50,7 @@ class _SplashScreenState extends State<SplashScreen>
       // Jika belum login, tunggu 5 detik ke login
       Future.delayed(const Duration(seconds: 5), () {
         if (!mounted) return;
-        Navigator.pushReplacementNamed(context, '/login');
+        Navigator.pushReplacementNamed(context, '/intro');
       });
     }
   }
@@ -70,7 +70,7 @@ class _SplashScreenState extends State<SplashScreen>
                 height: 200,
                 width: 200,
                 child: Image.asset(
-                  'assets/images/logo.png',
+                  'assets/images/dermayu.png',
                   fit: BoxFit.contain,
                 ),
               ),
