@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:new_apk/kontens/kuliner_screen.dart';
+import 'package:new_apk/kontens/penginapan_screen.dart';
+import 'package:new_apk/kontens/religi_screen.dart';
 import 'package:new_apk/screens/destination_detail.dart';
 import 'package:new_apk/screens/home_screen.dart';
 import 'package:new_apk/screens/intro_screen.dart';
@@ -10,6 +13,7 @@ import 'package:new_apk/screens/splash_screen.dart';
 import 'package:new_apk/screens/login_screen.dart';
 import 'package:new_apk/screens/register_screen.dart';
 import 'package:new_apk/models/edit_profile_screen.dart';
+import 'package:new_apk/screens/logo_screen.dart';
 
 import 'package:new_apk/admins/admin_home_screen.dart';
 import 'package:new_apk/admins/manage_destinations_screen.dart';
@@ -26,7 +30,7 @@ Future<void> main() async {
     anonKey:
         'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFma2t1cmd6ZnNwYXBvdWZ1c2RkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTExMDM4MzUsImV4cCI6MjA2NjY3OTgzNX0.j3rztQSl9oOsz0irQhqIBgdFNRw7yt0KLFnmy1pmRy4',
   );
-
+  
   runApp(
     MultiProvider(
       providers: [ChangeNotifierProvider(create: (_) => ThemeProvider())],
@@ -80,9 +84,10 @@ class MyApp extends StatelessWidget {
         fontFamily: 'Poppins',
       ),
 
-      // Routes & Navigasi
-      initialRoute: '/splash',
+      // ROUTES
+      initialRoute: '/',
       routes: {
+        '/': (_) => const LogoScreen(), // Logo dulu
         '/splash': (_) => const SplashScreen(),
         '/login': (_) => const LoginScreen(),
         '/register': (_) => const RegisterScreen(),
@@ -96,13 +101,18 @@ class MyApp extends StatelessWidget {
         '/admin/manage-users': (_) => const ManageUsersScreen(),
         '/admin/manage-comments': (_) => const ManageCommentsScreen(),
 
-        // Settings & lainnya
+        // Settings
         '/settings': (_) => SettingsScreen(),
         '/change-password': (_) => const ChangePasswordScreen(),
         '/about': (_) => const AboutScreen(),
+
+         // Route untuk masing-masing kategori
+        '/religi': (context) => const ReligiScreen(),
+        '/kuliner': (context) => const KulinerScreen(),
+        '/penginapan': (context) => const PenginapanScreen(),
       },
 
-      // Route dinamis (detail destinasi)
+      // ROUTE DINAMIS
       onGenerateRoute: (settings) {
         if (settings.name == '/detail') {
           final args = settings.arguments as Map<String, dynamic>;

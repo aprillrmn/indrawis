@@ -89,6 +89,11 @@ flutter:
     - assets/images/logo.png
     - assets/images/alun.png
     - assets/images/user.png
+    - assets/images/center.jpg
+    - assets/images/dermayu.png
+    - assets/images/awal.png
+    - assets/images/kota.png
+    - assets/images/agung.png
 
 
   # An image asset can refer to one or more resolution-specific "variants", see

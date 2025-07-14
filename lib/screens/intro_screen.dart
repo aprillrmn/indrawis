@@ -8,7 +8,8 @@ class IntroScreen extends StatefulWidget {
   State<IntroScreen> createState() => _IntroScreenState();
 }
 
-class _IntroScreenState extends State<IntroScreen> with TickerProviderStateMixin {
+class _IntroScreenState extends State<IntroScreen>
+    with TickerProviderStateMixin {
   final PageController _pageController = PageController();
   int _currentPage = 0;
   Timer? _timer;
@@ -16,22 +17,27 @@ class _IntroScreenState extends State<IntroScreen> with TickerProviderStateMixin
   late AnimationController _animController;
   late Animation<double> _fadeAnimation;
   late Animation<double> _scaleAnimation;
+  late Animation<Offset> _slideAnimationText;
+  late Animation<double> _fadeAnimationText;
 
   final List<Map<String, String>> introData = [
     {
-      'image': 'assets/images/slide1.png',
+      'image': 'assets/images/center.jpg',
       'title': 'Selamat Datang',
-      'desc': 'Jelajahi destinasi terbaik di sekitar Anda.'
+      'desc':
+          'Hai traveler kece! Yuk, main ke Indramayu bareng kami, nikmati wisata religi yang keren banget dan bikin hati adem. Gaskeun!',
     },
     {
-      'image': 'assets/images/slide2.png',
-      'title': 'Kuliner & Wisata',
-      'desc': 'Temukan rekomendasi kuliner dan wisata menarik.'
+      'image': 'assets/images/kota.png',
+      'title': 'Wisata Religi',
+      'desc':
+          'Yuk, temukan wisata religi paling keren di Indramayu yang super direkomendasiin buat kamu!',
     },
     {
-      'image': 'assets/images/slide3.png',
+      'image': 'assets/images/agung.png',
       'title': 'Nikmati Perjalanan',
-      'desc': 'Rencanakan liburanmu lebih mudah dan menyenangkan.'
+      'desc':
+          'Kira-kira, kejutan seru apa ya yang nungguin kamu di Indramayu? Yuk, cari tahu!',
     },
   ];
 
@@ -47,12 +53,27 @@ class _IntroScreenState extends State<IntroScreen> with TickerProviderStateMixin
       vsync: this,
       duration: const Duration(milliseconds: 1000),
     );
-    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _animController, curve: Curves.easeIn),
-    );
-    _scaleAnimation = Tween<double>(begin: 0.9, end: 1.0).animate(
-      CurvedAnimation(parent: _animController, curve: Curves.easeOut),
-    );
+
+    _fadeAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _animController, curve: Curves.easeIn));
+
+    _scaleAnimation = Tween<double>(
+      begin: 0.9,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _animController, curve: Curves.easeOut));
+
+    _slideAnimationText = Tween<Offset>(
+      begin: const Offset(0, 0.3),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(parent: _animController, curve: Curves.easeOut));
+
+    _fadeAnimationText = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _animController, curve: Curves.easeIn));
+
     _animController.forward();
   }
 
@@ -80,7 +101,9 @@ class _IntroScreenState extends State<IntroScreen> with TickerProviderStateMixin
   void _nextPage() {
     if (_currentPage < introData.length - 1) {
       _pageController.nextPage(
-          duration: const Duration(milliseconds: 400), curve: Curves.easeInOut);
+        duration: const Duration(milliseconds: 600),
+        curve: Curves.easeInOut,
+      );
     } else {
       Navigator.pushReplacementNamed(context, '/login');
     }
@@ -95,28 +118,91 @@ class _IntroScreenState extends State<IntroScreen> with TickerProviderStateMixin
   }
 
   Widget _buildPage(Map<String, String> data) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
+    return Stack(
+      fit: StackFit.expand,
       children: [
-        FadeTransition(
-          opacity: _fadeAnimation,
-          child: ScaleTransition(
-            scale: _scaleAnimation,
-            child: Image.asset(data['image']!, width: 250, height: 250),
+        // Background image with fade + scale
+        Positioned.fill(
+          child: FadeTransition(
+            opacity: _fadeAnimation,
+            child: ScaleTransition(
+              scale: _scaleAnimation,
+              child: Image.asset(data['image']!, fit: BoxFit.cover),
+            ),
           ),
         ),
-        const SizedBox(height: 30),
-        Text(
-          data['title']!,
-          style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+
+        // Gradient overlay supaya teks lebih terbaca
+        Positioned.fill(
+          child: Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.bottomCenter,
+                end: Alignment.topCenter,
+                colors: [Colors.black54, Colors.transparent],
+              ),
+            ),
+          ),
         ),
-        const SizedBox(height: 12),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 40),
-          child: Text(
-            data['desc']!,
-            style: const TextStyle(fontSize: 16),
-            textAlign: TextAlign.center,
+
+        // Glassmorphism container untuk teks
+        Positioned(
+          bottom: 500, // naikkan dari 80 ke 150
+          left: 20,
+          right: 20,
+          child: SlideTransition(
+            position: _slideAnimationText,
+            child: FadeTransition(
+              opacity: _fadeAnimationText,
+              child: Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: Colors.white.withOpacity(0.4),
+                    width: 1,
+                  ),
+                  backgroundBlendMode: BlendMode.overlay,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      data['title']!,
+                      style: const TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                        shadows: [
+                          Shadow(
+                            offset: Offset(1, 1),
+                            blurRadius: 4,
+                            color: Colors.black54,
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      data['desc']!,
+                      style: const TextStyle(
+                        fontSize: 18,
+                        color: Colors.white,
+                        height: 1.4,
+                        shadows: [
+                          Shadow(
+                            offset: Offset(1, 1),
+                            blurRadius: 4,
+                            color: Colors.black38,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ),
         ),
       ],
@@ -128,42 +214,53 @@ class _IntroScreenState extends State<IntroScreen> with TickerProviderStateMixin
     return Scaffold(
       body: Stack(
         children: [
-          Column(
-            children: [
-              Expanded(
-                child: PageView.builder(
-                  controller: _pageController,
-                  itemCount: introData.length,
-                  onPageChanged: _onPageChanged,
-                  itemBuilder: (context, index) => _buildPage(introData[index]),
+          PageView.builder(
+            controller: _pageController,
+            itemCount: introData.length,
+            onPageChanged: _onPageChanged,
+            itemBuilder: (context, index) => _buildPage(introData[index]),
+          ),
+          Positioned(
+            bottom: 80,
+            left: 0,
+            right: 0,
+            child: Column(
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: List.generate(introData.length, (index) {
+                    return AnimatedContainer(
+                      duration: const Duration(milliseconds: 300),
+                      margin: const EdgeInsets.symmetric(horizontal: 5),
+                      width: _currentPage == index ? 20 : 8,
+                      height: 8,
+                      decoration: BoxDecoration(
+                        color:
+                            _currentPage == index
+                                ? Colors.white
+                                : Colors.white54,
+                        borderRadius: BorderRadius.circular(5),
+                      ),
+                    );
+                  }),
                 ),
-              ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: List.generate(introData.length, (index) {
-                  return AnimatedContainer(
-                    duration: const Duration(milliseconds: 300),
-                    margin: const EdgeInsets.symmetric(horizontal: 5, vertical: 20),
-                    width: _currentPage == index ? 20 : 8,
-                    height: 8,
-                    decoration: BoxDecoration(
-                      color: _currentPage == index ? Colors.blue : Colors.grey,
-                      borderRadius: BorderRadius.circular(5),
-                    ),
-                  );
-                }),
-              ),
-              Padding(
-                padding: const EdgeInsets.only(bottom: 30),
-                child: ElevatedButton(
+                const SizedBox(height: 20),
+                ElevatedButton(
                   onPressed: _nextPage,
                   style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 12),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 40,
+                      vertical: 12,
+                    ),
+                    backgroundColor: Colors.blueAccent.withOpacity(0.8),
                   ),
-                  child: Text(_currentPage == introData.length - 1 ? 'Mulai' : 'Lanjut'),
+                  child: Text(
+                    _currentPage == introData.length - 1 ? 'Mulai' : 'Lanjut',
+                    style: const TextStyle(color: Colors.white),
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
           Positioned(
             top: 40,
@@ -172,7 +269,10 @@ class _IntroScreenState extends State<IntroScreen> with TickerProviderStateMixin
               onPressed: () {
                 Navigator.pushReplacementNamed(context, '/login');
               },
-              child: const Text('Skip', style: TextStyle(fontSize: 16)),
+              child: const Text(
+                'Skip',
+                style: TextStyle(fontSize: 16, color: Colors.white),
+              ),
             ),
           ),
         ],

@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:new_apk/admins/setting_screen.dart';
+import 'package:new_apk/kontens/kuliner_screen.dart';
+import 'package:new_apk/kontens/penginapan_screen.dart';
+import 'package:new_apk/kontens/religi_screen.dart';
 import 'package:new_apk/screens/destination_detail.dart';
 import 'package:new_apk/models/edit_profile_screen.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -19,28 +22,43 @@ class _MyHomeScreenState extends State<MyHomeScreen> {
   LatLng? _currentPosition;
   bool _locationRequested = false;
   bool _isLoading = false;
+
+  // Tambahan: kategori yang dipilih (null = semua)
+
   List<Map<String, dynamic>> _destinations = [];
 
   @override
   void initState() {
     super.initState();
-    _fetchDestinations();
+    _fetchDestinations(); // load semua kategori awalnya
   }
 
-  Future<void> _fetchDestinations() async {
+  Future<void> _fetchDestinations({String? kategori}) async {
+    setState(() => _isLoading = true);
     try {
-      final response = await Supabase.instance.client
+      // Siapkan query dengan kolom kategori
+      var query = Supabase.instance.client
           .from('konten')
-          .select('id, judul, deskripsi, gambar_url, latitude, longitude');
+          .select(
+            'id, judul, deskripsi, gambar_url, latitude, longitude, kategori',
+          );
 
-      setState(() {
-        _destinations = List<Map<String, dynamic>>.from(response);
-      });
+      // Jika ada filter kategori, tambahkan
+      if (kategori != null) {
+        query = query.eq('kategori', kategori);
+      }
+
+      // Ambil data
+      final response = await query;
+      // Ubah menjadi List<Map>
+      _destinations = List<Map<String, dynamic>>.from(response as List);
     } catch (e) {
       debugPrint('Error fetch destinations: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Gagal mengambil data destinasi: $e')),
       );
+    } finally {
+      setState(() => _isLoading = false);
     }
   }
 
@@ -110,14 +128,14 @@ class _MyHomeScreenState extends State<MyHomeScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                destination['title'] ?? '',
+                destination['judul'] ?? '',
                 style: const TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
                 ),
               ),
               const SizedBox(height: 10),
-              Text(destination['description'] ?? ''),
+              Text(destination['deskripsi'] ?? ''),
               const SizedBox(height: 10),
               Text(
                 'Lokasi: ${destination['latitude']}, ${destination['longitude']}',
@@ -161,7 +179,7 @@ class _MyHomeScreenState extends State<MyHomeScreen> {
   Widget build(BuildContext context) {
     final list = getFilteredAndSortedDestinations();
 
-    if (_isLoading) {
+    if (_isLoading && !_locationRequested) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
@@ -174,7 +192,7 @@ class _MyHomeScreenState extends State<MyHomeScreen> {
               Icon(Icons.travel_explore, size: 80, color: Colors.green),
               const SizedBox(height: 20),
               const Text(
-                'Selamat Datang Sobat Indrawis',
+                'Selamat Datang Traveler Kece',
                 style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 40),
@@ -227,6 +245,21 @@ class _MyHomeScreenState extends State<MyHomeScreen> {
 
       body: Column(
         children: [
+          // === BAR FILTER KATEGORI ===
+          Container(
+            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+            color: Colors.white,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                _buildCategoryChip('Religi'),
+                _buildCategoryChip('Kuliner'),
+                _buildCategoryChip('Penginapan'),
+              ],
+            ),
+          ),
+
+          // === PETA ===
           Expanded(
             flex: 2,
             child: GoogleMap(
@@ -245,8 +278,8 @@ class _MyHomeScreenState extends State<MyHomeScreen> {
                   (d) => Marker(
                     markerId: MarkerId('${d['id']}'),
                     position: LatLng(
-                      double.tryParse(d['latitude'].toString()) ?? 0.0,
-                      double.tryParse(d['longitude'].toString()) ?? 0.0,
+                      double.parse(d['latitude'].toString()),
+                      double.parse(d['longitude'].toString()),
                     ),
                     infoWindow: InfoWindow(
                       title: d['judul'],
@@ -260,9 +293,43 @@ class _MyHomeScreenState extends State<MyHomeScreen> {
               onMapCreated: (c) => _googleMapController = c,
             ),
           ),
+
+          // === DAFTAR DESTINASI ===
           Expanded(flex: 1, child: buildDestinationList(list)),
         ],
       ),
+    );
+  }
+
+  Widget _buildCategoryChip(String kategori) {
+    IconData iconData;
+    Widget screen;
+    switch (kategori) {
+      case 'Religi':
+        iconData = Icons.church;
+        screen = ReligiScreen();
+        break;
+      case 'Kuliner':
+        iconData = Icons.restaurant;
+        screen = KulinerScreen();
+        break;
+      case 'Penginapan':
+        iconData = Icons.hotel;
+        screen = PenginapanScreen();
+        break;
+      default:
+        iconData = Icons.category;
+        screen = MyHomeScreen();
+    }
+
+    return ActionChip(
+      avatar: Icon(iconData, size: 20, color: Colors.white),
+      label: Text(kategori, style: const TextStyle(color: Colors.white)),
+      backgroundColor: Colors.green,
+      onPressed: () {
+        // Redirect ke halaman kategori yang sesuai
+        Navigator.push(context, MaterialPageRoute(builder: (_) => screen));
+      },
     );
   }
 
@@ -296,7 +363,7 @@ class _MyHomeScreenState extends State<MyHomeScreen> {
                         context,
                         MaterialPageRoute(
                           builder:
-                              (context) => DestinationDetailScreen(
+                              (_) => DestinationDetailScreen(
                                 kontenId: int.tryParse(d['id'].toString()) ?? 0,
                                 heroTag: 'hero_${d['id']}',
                                 title: d['judul'] ?? '',
