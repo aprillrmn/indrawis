@@ -30,7 +30,7 @@ Future<void> main() async {
     anonKey:
         'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFma2t1cmd6ZnNwYXBvdWZ1c2RkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTExMDM4MzUsImV4cCI6MjA2NjY3OTgzNX0.j3rztQSl9oOsz0irQhqIBgdFNRw7yt0KLFnmy1pmRy4',
   );
-  
+
   runApp(
     MultiProvider(
       providers: [ChangeNotifierProvider(create: (_) => ThemeProvider())],
@@ -98,7 +98,7 @@ class MyApp extends StatelessWidget {
         // Admin
         '/admin': (_) => const AdminHomeScreen(),
         '/admin/manage-destinations': (_) => const ManageDestinationsScreen(),
-        '/admin/manage-users': (_) => const ManageUsersScreen(),
+        '/admin/manage-users': (_) => const ManageCategoriesScreen(),
         '/admin/manage-comments': (_) => const ManageCommentsScreen(),
 
         // Settings
@@ -106,7 +106,7 @@ class MyApp extends StatelessWidget {
         '/change-password': (_) => const ChangePasswordScreen(),
         '/about': (_) => const AboutScreen(),
 
-         // Route untuk masing-masing kategori
+        // Route untuk masing-masing kategori
         '/religi': (context) => const ReligiScreen(),
         '/kuliner': (context) => const KulinerScreen(),
         '/penginapan': (context) => const PenginapanScreen(),

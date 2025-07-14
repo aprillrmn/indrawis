@@ -42,13 +42,13 @@ class AdminHomeScreen extends StatelessWidget {
                 Navigator.pushNamed(context, '/admin/manage-destinations');
               },
             ),
-            // AdminMenuItem(
-            //   icon: Icons.people,
-            //   label: 'Kelola Pengguna',
-            //   onTap: () {
-            //     Navigator.pushNamed(context, '/admin/manage-users');
-            //   },
-            // ),
+            AdminMenuItem(
+              icon: Icons.people,
+              label: 'Kelola Kategori',
+              onTap: () {
+                Navigator.pushNamed(context, '/admin/manage-users');
+              },
+            ),
             AdminMenuItem(
               icon: Icons.comment,
               label: 'Kelola Komentar',
