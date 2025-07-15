@@ -17,6 +17,56 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
 
   bool _isLoading = false;
 
+  bool _isPasswordVisibleOld = false;
+  bool _isPasswordVisibleNew = false;
+  bool _isPasswordVisibleConfirm = false;
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _oldPasswordController.dispose();
+    _newPasswordController.dispose();
+    _confirmPasswordController.dispose();
+    super.dispose();
+  }
+
+  Widget _buildInputField({
+    required TextEditingController controller,
+    required String label,
+    required IconData icon,
+    TextInputType keyboardType = TextInputType.text,
+    bool obscureText = false,
+    bool isPasswordVisible = false,
+    void Function()? toggleVisibility,
+    String? Function(String?)? validator,
+  }) {
+    return TextFormField(
+      controller: controller,
+      keyboardType: keyboardType,
+      obscureText: obscureText && !isPasswordVisible,
+      validator: validator,
+      decoration: InputDecoration(
+        labelText: label,
+        prefixIcon: Icon(icon, color: const Color(0xFF008170)),
+        suffixIcon:
+            obscureText
+                ? IconButton(
+                  icon: Icon(
+                    isPasswordVisible ? Icons.visibility : Icons.visibility_off,
+                    color: Colors.grey,
+                  ),
+                  onPressed: toggleVisibility,
+                )
+                : null,
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+        focusedBorder: OutlineInputBorder(
+          borderSide: const BorderSide(color: Color(0xFF008170), width: 2),
+          borderRadius: BorderRadius.circular(12),
+        ),
+      ),
+    );
+  }
+
   Future<void> _showSuccessPopup() async {
     showGeneralDialog(
       context: context,
@@ -60,11 +110,10 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
       },
     );
 
-    // otomatis tutup & kembali dalam 2 detik
     await Future.delayed(const Duration(seconds: 2));
     if (mounted) {
-      Navigator.of(context, rootNavigator: true).pop(); // tutup popup
-      Navigator.of(context).pop(); // kembali ke halaman sebelumnya
+      Navigator.of(context, rootNavigator: true).pop();
+      Navigator.of(context).pop();
     }
   }
 
@@ -77,18 +126,15 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
     final newPassword = _newPasswordController.text.trim();
 
     try {
-      // Re-authenticate
       await Supabase.instance.client.auth.signInWithPassword(
         email: email,
         password: oldPassword,
       );
 
-      // Update password
       await Supabase.instance.client.auth.updateUser(
         UserAttributes(password: newPassword),
       );
 
-      // Tampilkan popup sukses
       await _showSuccessPopup();
     } on AuthException catch (e) {
       if (!mounted) return;
@@ -106,15 +152,6 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
   }
 
   @override
-  void dispose() {
-    _emailController.dispose();
-    _oldPasswordController.dispose();
-    _newPasswordController.dispose();
-    _confirmPasswordController.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
     const mainColor = Color(0xFF008170);
 
@@ -122,19 +159,30 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
       appBar: AppBar(
         title: const Text('Ubah Kata Sandi'),
         backgroundColor: mainColor,
+        elevation: 0,
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
         child: Form(
           key: _formKey,
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              TextFormField(
+              const Text(
+                'Perbarui kata sandi Anda',
+                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Silakan masukkan data di bawah ini untuk mengganti kata sandi.',
+                style: TextStyle(color: Colors.grey[700]),
+              ),
+              const SizedBox(height: 32),
+
+              _buildInputField(
                 controller: _emailController,
-                decoration: const InputDecoration(
-                  labelText: 'Email',
-                  border: OutlineInputBorder(),
-                ),
+                label: 'Email',
+                icon: Icons.email,
                 keyboardType: TextInputType.emailAddress,
                 validator:
                     (value) =>
@@ -143,13 +191,18 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                             : null,
               ),
               const SizedBox(height: 16),
-              TextFormField(
+
+              _buildInputField(
                 controller: _oldPasswordController,
-                decoration: const InputDecoration(
-                  labelText: 'Kata Sandi Lama',
-                  border: OutlineInputBorder(),
-                ),
+                label: 'Kata Sandi Lama',
+                icon: Icons.lock_outline,
                 obscureText: true,
+                isPasswordVisible: _isPasswordVisibleOld,
+                toggleVisibility: () {
+                  setState(() {
+                    _isPasswordVisibleOld = !_isPasswordVisibleOld;
+                  });
+                },
                 validator:
                     (value) =>
                         (value == null || value.isEmpty)
@@ -157,13 +210,18 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                             : null,
               ),
               const SizedBox(height: 16),
-              TextFormField(
+
+              _buildInputField(
                 controller: _newPasswordController,
-                decoration: const InputDecoration(
-                  labelText: 'Kata Sandi Baru',
-                  border: OutlineInputBorder(),
-                ),
+                label: 'Kata Sandi Baru',
+                icon: Icons.lock,
                 obscureText: true,
+                isPasswordVisible: _isPasswordVisibleNew,
+                toggleVisibility: () {
+                  setState(() {
+                    _isPasswordVisibleNew = !_isPasswordVisibleNew;
+                  });
+                },
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'Masukkan kata sandi baru';
@@ -175,13 +233,18 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                 },
               ),
               const SizedBox(height: 16),
-              TextFormField(
+
+              _buildInputField(
                 controller: _confirmPasswordController,
-                decoration: const InputDecoration(
-                  labelText: 'Konfirmasi Kata Sandi Baru',
-                  border: OutlineInputBorder(),
-                ),
+                label: 'Konfirmasi Kata Sandi Baru',
+                icon: Icons.lock,
                 obscureText: true,
+                isPasswordVisible: _isPasswordVisibleConfirm,
+                toggleVisibility: () {
+                  setState(() {
+                    _isPasswordVisibleConfirm = !_isPasswordVisibleConfirm;
+                  });
+                },
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'Ulangi kata sandi baru';
@@ -192,27 +255,40 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                   return null;
                 },
               ),
+
               const SizedBox(height: 32),
-              ElevatedButton(
-                onPressed: _isLoading ? null : _reauthenticateAndChangePassword,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: mainColor,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 32,
-                    vertical: 14,
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed:
+                      _isLoading ? null : _reauthenticateAndChangePassword,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: mainColor,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    elevation: 6,
+                    shadowColor: mainColor.withOpacity(0.4),
                   ),
-                ),
-                child:
-                    _isLoading
-                        ? const SizedBox(
-                          height: 20,
-                          width: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Colors.white,
+                  child:
+                      _isLoading
+                          ? const SizedBox(
+                            width: 24,
+                            height: 24,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                          : const Text(
+                            'Simpan',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
-                        )
-                        : const Text('Simpan'),
+                ),
               ),
             ],
           ),

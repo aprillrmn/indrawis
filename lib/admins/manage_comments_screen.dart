@@ -42,6 +42,57 @@ class _ManageCommentsScreenState extends State<ManageCommentsScreen> {
     }
   }
 
+  Future<void> _konfirmasiHapus(String id) async {
+    final konfirmasi = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          title: const Text('Hapus Komentar'),
+          content: const Text(
+            'Apakah Anda yakin ingin menghapus komentar ini?',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Batal'),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('Hapus'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (konfirmasi == true) {
+      await _hapusKomentar(id);
+    }
+  }
+
+  Future<void> _hapusKomentar(String id) async {
+    try {
+      await Supabase.instance.client.from('komentar').delete().eq('id', id);
+
+      setState(() {
+        commentList.removeWhere((item) => item.id == id);
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Komentar berhasil dihapus')),
+      );
+    } catch (e) {
+      print('Gagal hapus komentar: $e');
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Gagal menghapus komentar')));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final sortedList = [...commentList];
@@ -133,7 +184,7 @@ class _ManageCommentsScreenState extends State<ManageCommentsScreen> {
                                               : null,
                                     ),
                                     child:
-                                        (komentar.foto.isEmpty)
+                                        komentar.foto.isEmpty
                                             ? const Icon(
                                               Icons.person,
                                               color: Colors.white,
@@ -146,22 +197,51 @@ class _ManageCommentsScreenState extends State<ManageCommentsScreen> {
                                       crossAxisAlignment:
                                           CrossAxisAlignment.start,
                                       children: [
-                                        Text(
-                                          komentar.nama,
-                                          style: const TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 16,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 4),
-                                        Text(komentar.isi),
-                                        const SizedBox(height: 8),
-                                        Text(
-                                          _formatTanggal(komentar.tanggal),
-                                          style: const TextStyle(
-                                            fontSize: 12,
-                                            color: Colors.grey,
-                                          ),
+                                        Row(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            Expanded(
+                                              child: Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  Text(
+                                                    komentar.nama,
+                                                    style: const TextStyle(
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                      fontSize: 16,
+                                                    ),
+                                                  ),
+                                                  const SizedBox(height: 4),
+                                                  Text(komentar.isi),
+                                                  const SizedBox(height: 8),
+                                                  Text(
+                                                    _formatTanggal(
+                                                      komentar.tanggal,
+                                                    ),
+                                                    style: const TextStyle(
+                                                      fontSize: 12,
+                                                      color: Colors.grey,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                            IconButton(
+                                              onPressed:
+                                                  () => _konfirmasiHapus(
+                                                    komentar.id,
+                                                  ),
+                                              icon: const Icon(
+                                                Icons.delete,
+                                                color: Colors.red,
+                                              ),
+                                            ),
+                                          ],
                                         ),
                                       ],
                                     ),
