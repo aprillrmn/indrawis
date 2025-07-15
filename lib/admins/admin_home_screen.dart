@@ -5,6 +5,38 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 class AdminHomeScreen extends StatelessWidget {
   const AdminHomeScreen({super.key});
 
+  Future<void> _confirmLogout(BuildContext context) async {
+    final shouldLogout = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: const Text('Konfirmasi Keluar'),
+          content: const Text('Apakah Anda yakin ingin keluar dari aplikasi?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text(
+                'Batal',
+                style: TextStyle(color: Color.fromARGB(255, 76, 1, 250)),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('Ya'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (shouldLogout == true) {
+      await _logout(context);
+    }
+  }
+
   Future<void> _logout(BuildContext context) async {
     await Supabase.instance.client.auth.signOut();
 
@@ -20,11 +52,11 @@ class AdminHomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Admin Dashboard'),
+        title: const Text('Dashboard Admin'),
         actions: [
           IconButton(
             icon: const Icon(Icons.logout),
-            onPressed: () => _logout(context),
+            onPressed: () => _confirmLogout(context),
           ),
         ],
       ),
@@ -43,7 +75,7 @@ class AdminHomeScreen extends StatelessWidget {
               },
             ),
             AdminMenuItem(
-              icon: Icons.people,
+              icon: Icons.category_outlined,
               label: 'Kelola Kategori',
               onTap: () {
                 Navigator.pushNamed(context, '/admin/manage-users');

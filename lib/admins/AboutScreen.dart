@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class AboutScreen extends StatefulWidget {
   const AboutScreen({super.key});
@@ -37,6 +39,58 @@ class _AboutScreenState extends State<AboutScreen> {
           child: ListView(
             padding: const EdgeInsets.all(24),
             children: [
+              Center(
+                child: Column(
+                  children: [
+                    Image.asset('assets/images/awal.png', height: 120),
+                    const Text(
+                      'Indramayu Wisata',
+                      style: TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF232D3F),
+                      ),
+                    ),
+                    SizedBox(height: 4),
+                    Text(
+                      'Versi 1.0.0 (Beta)',
+                      style: TextStyle(color: Colors.grey),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 32),
+              Card(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                elevation: 3,
+                child: Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: const [
+                      Text(
+                        'Tentang Aplikasi',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF008170),
+                        ),
+                      ),
+                      SizedBox(height: 12),
+                      Text(
+                        'Indramayu Wisata (Indrawis) adalah aplikasi panduan wisata '
+                        'untuk membantu Anda menjelajahi destinasi religi, kuliner, '
+                        'dan penginapan terbaik di Indramayu. Temukan pengalaman '
+                        'wisata yang berkesan langsung dari genggaman Anda.',
+                        style: TextStyle(fontSize: 16),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 15),
               Card(
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),
@@ -45,55 +99,68 @@ class _AboutScreenState extends State<AboutScreen> {
                 child: Padding(
                   padding: const EdgeInsets.all(20),
                   child: Column(
-                    children: [
-                      Icon(Icons.explore, size: 60, color: Color(0xFF008170)),
-                      const SizedBox(height: 16),
-                      const Text(
-                        'Indramayu Wisata (Indrawis)',
-                        style: TextStyle(
-                          fontSize: 26,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF232D3F),
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      const Text(
-                        'Versi 1.0.0 (Pengembangan)',
-                        style: TextStyle(color: Colors.grey),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 24),
-              Card(
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                elevation: 3,
-                child: Padding(
-                  padding: const EdgeInsets.all(20),
-                  child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
-                    children: const [
-                      Icon(
-                        Icons.info_outline,
-                        color: Color(0xFF008170),
-                        size: 30,
-                      ),
-                      SizedBox(width: 16),
-                      Expanded(
-                        child: Text(
-                          'Aplikasi ini membantu Anda menjelajahi destinasi religi, kuliner, dan penginapan '
-                          'untuk memperkaya pengalaman rohani dan wisata Anda.',
-                          style: TextStyle(fontSize: 16),
+                    children: [
+                      const Text(
+                        'Informasi',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF008170),
                         ),
                       ),
+                      const SizedBox(height: 12),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          const Icon(Icons.email, color: Color(0xFF008170)),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: InkWell(
+                              onTap: _launchEmail,
+                              child: const Text(
+                                'apriliadyrahman9@gmail.com',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  color: Color(0xFF008170),
+                                  decoration: TextDecoration.underline,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          const FaIcon(
+                            FontAwesomeIcons.instagram,
+                            color: Color(0xFF008170),
+                            size: 20,
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: InkWell(
+                              onTap: _launchInstagram,
+                              child: const Text(
+                                '@dispara_indramayu',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  color: Color(0xFF008170),
+                                  decoration: TextDecoration.underline,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
                     ],
                   ),
                 ),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 15),
               Card(
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),
@@ -103,11 +170,11 @@ class _AboutScreenState extends State<AboutScreen> {
                   padding: const EdgeInsets.all(20),
                   child: Row(
                     children: const [
-                      Icon(Icons.favorite, color: Colors.redAccent, size: 30),
+                      Icon(Icons.copyright, color: Colors.grey, size: 28),
                       SizedBox(width: 16),
                       Expanded(
                         child: Text(
-                          'Copyright Aprillrmn-D3TI.3A',
+                          '© 2025 Aprillrmn-D3TI.3A. \n Semua hak dilindungi.',
                           style: TextStyle(fontSize: 16),
                         ),
                       ),
@@ -120,5 +187,26 @@ class _AboutScreenState extends State<AboutScreen> {
         ),
       ),
     );
+  }
+
+  Future<void> _launchEmail() async {
+    final Uri emailUri = Uri(
+      scheme: 'mailto',
+      path: 'apriliadyrahman9@gmail.com',
+    );
+
+    if (!await launchUrl(emailUri, mode: LaunchMode.externalApplication)) {
+      throw Exception('Tidak bisa membuka email');
+    }
+  }
+
+  Future<void> _launchInstagram() async {
+    final Uri instagramUri = Uri.parse(
+      'https://instagram.com/dispara_indramayu',
+    );
+
+    if (!await launchUrl(instagramUri, mode: LaunchMode.externalApplication)) {
+      throw Exception('Tidak bisa membuka Instagram');
+    }
   }
 }

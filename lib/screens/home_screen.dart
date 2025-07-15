@@ -218,7 +218,7 @@ class _MyHomeScreenState extends State<MyHomeScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Home Destinasi'),
+        title: const Text('Destinasi Wisata'),
         actions: [
           IconButton(
             icon: const Icon(Icons.settings),
