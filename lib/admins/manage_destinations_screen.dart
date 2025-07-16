@@ -7,8 +7,6 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:path/path.dart' as path;
 import 'package:mime/mime.dart';
 
-// asumsi kamu sudah punya MapPickerScreen yg akan mengembalikan { 'lat': .., 'lng': .. }
-
 class ManageDestinationsScreen extends StatefulWidget {
   const ManageDestinationsScreen({super.key});
 
@@ -115,13 +113,6 @@ class _ManageDestinationsScreenState extends State<ManageDestinationsScreen> {
                   margin: const EdgeInsets.all(16),
                   borderRadius: BorderRadius.circular(16),
                   backgroundColor: Colors.green.withOpacity(0.7),
-                  boxShadows: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.2),
-                      offset: Offset(0, 2),
-                      blurRadius: 4,
-                    ),
-                  ],
                   icon: const Icon(
                     Icons.check_circle,
                     color: Colors.white,
@@ -133,7 +124,6 @@ class _ManageDestinationsScreenState extends State<ManageDestinationsScreen> {
                   ),
                   duration: const Duration(seconds: 3),
                   flushbarPosition: FlushbarPosition.TOP,
-                  animationDuration: const Duration(milliseconds: 500),
                 ).show(context);
               }
 
@@ -298,8 +288,10 @@ class _ManageDestinationsScreenState extends State<ManageDestinationsScreen> {
                         ),
                       ),
                       const SizedBox(height: 16),
-                      ElevatedButton(
+                      ElevatedButton.icon(
                         onPressed: _save,
+                        icon: const Icon(Icons.save),
+                        label: const Text('Simpan'),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFF008170),
                           shape: RoundedRectangleBorder(
@@ -309,15 +301,6 @@ class _ManageDestinationsScreenState extends State<ManageDestinationsScreen> {
                             horizontal: 20,
                             vertical: 14,
                           ),
-                        ),
-                        child: const Row(
-                          mainAxisSize: MainAxisSize.min,
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.save, size: 20),
-                            SizedBox(width: 8),
-                            Text('Simpan'),
-                          ],
                         ),
                       ),
                     ],
@@ -337,13 +320,6 @@ class _ManageDestinationsScreenState extends State<ManageDestinationsScreen> {
         margin: const EdgeInsets.all(16),
         borderRadius: BorderRadius.circular(16),
         backgroundColor: Colors.green.withOpacity(0.7),
-        boxShadows: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.2),
-            offset: Offset(0, 2),
-            blurRadius: 4,
-          ),
-        ],
         icon: const Icon(Icons.check_circle, color: Colors.white, size: 28),
         messageText: const Text(
           'Destinasi berhasil dihapus',
@@ -351,9 +327,8 @@ class _ManageDestinationsScreenState extends State<ManageDestinationsScreen> {
         ),
         duration: const Duration(seconds: 3),
         flushbarPosition: FlushbarPosition.TOP,
-        animationDuration: const Duration(milliseconds: 500),
       ).show(context);
-      await _fetchDestinations(); // ambil data terbaru
+      await _fetchDestinations();
     } catch (e) {
       ScaffoldMessenger.of(
         context,
@@ -374,6 +349,11 @@ class _ManageDestinationsScreenState extends State<ManageDestinationsScreen> {
       appBar: AppBar(
         title: const Text('Kelola Destinasi'),
         backgroundColor: const Color(0xFF008170),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: _addDestination,
+        backgroundColor: const Color(0xFF008170),
+        child: const Icon(Icons.add),
       ),
       body: Column(
         children: [
@@ -427,25 +407,15 @@ class _ManageDestinationsScreenState extends State<ManageDestinationsScreen> {
                                     ),
                               ),
                             ),
-                            title: Text(
-                              dest['judul'] ?? '',
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                              ),
+                            title: Text(dest['judul'] ?? ''),
+                            subtitle: Text(
+                              dest['deskripsi'] ?? '',
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
                             ),
-                            subtitle: Text(dest['deskripsi'] ?? ''),
-                            trailing: PopupMenuButton<String>(
-                              icon: const Icon(Icons.more_vert),
-                              onSelected: (value) {
-                                if (value == 'delete') _deleteDestination(dest);
-                              },
-                              itemBuilder:
-                                  (context) => [
-                                    const PopupMenuItem(
-                                      value: 'delete',
-                                      child: Text('Hapus'),
-                                    ),
-                                  ],
+                            trailing: IconButton(
+                              icon: const Icon(Icons.delete, color: Colors.red),
+                              onPressed: () => _deleteDestination(dest),
                             ),
                           ),
                         );
@@ -453,11 +423,6 @@ class _ManageDestinationsScreenState extends State<ManageDestinationsScreen> {
                     ),
           ),
         ],
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _addDestination,
-        backgroundColor: const Color(0xFF008170),
-        child: const Icon(Icons.add),
       ),
     );
   }

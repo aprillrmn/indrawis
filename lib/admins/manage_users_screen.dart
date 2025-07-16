@@ -308,7 +308,7 @@ class _ManageCategoriesScreenState extends State<ManageCategoriesScreen> {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
-                        trailing: TextButton(
+                        trailing: IconButton(
                           onPressed: () async {
                             bool? confirm = await showDialog<bool>(
                               context: context,
@@ -349,10 +349,7 @@ class _ManageCategoriesScreenState extends State<ManageCategoriesScreen> {
                               setState(() => loading = false);
                             }
                           },
-                          child: const Text(
-                            'Hapus',
-                            style: TextStyle(color: Colors.red),
-                          ),
+                          icon: const Icon(Icons.delete, color: Colors.red),
                         ),
                       ),
                     );
