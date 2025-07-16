@@ -121,7 +121,6 @@ class _IntroScreenState extends State<IntroScreen>
     return Stack(
       fit: StackFit.expand,
       children: [
-        // Background image with fade + scale
         Positioned.fill(
           child: FadeTransition(
             opacity: _fadeAnimation,
@@ -132,7 +131,6 @@ class _IntroScreenState extends State<IntroScreen>
           ),
         ),
 
-        // Gradient overlay supaya teks lebih terbaca
         Positioned.fill(
           child: Container(
             decoration: const BoxDecoration(
@@ -145,9 +143,8 @@ class _IntroScreenState extends State<IntroScreen>
           ),
         ),
 
-        // Glassmorphism container untuk teks
         Positioned(
-          bottom: 500, // naikkan dari 80 ke 150
+          bottom: 500, 
           left: 20,
           right: 20,
           child: SlideTransition(

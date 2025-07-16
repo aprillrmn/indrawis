@@ -52,10 +52,7 @@ class _AboutScreenState extends State<AboutScreen> {
                       ),
                     ),
                     SizedBox(height: 4),
-                    Text(
-                      'Versi 1.0.0 (Beta)',
-                      style: TextStyle(color: Colors.grey),
-                    ),
+                    Text('Versi 1.0.0', style: TextStyle(color: Colors.grey)),
                   ],
                 ),
               ),
