@@ -22,6 +22,7 @@ class DestinationDetailScreen extends StatefulWidget {
     required this.kontenId,
     required Map destination,
     required String heroTag,
+    required destinasi,
   }) : super(key: key);
 
   @override
@@ -375,10 +376,29 @@ class _DestinationDetailScreenState extends State<DestinationDetailScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.title),
-        backgroundColor: theme.primaryColor,
-        centerTitle: true,
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(kToolbarHeight),
+        child: AppBar(
+          title: Text(
+            widget.title,
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+          ),
+          automaticallyImplyLeading: true,
+          iconTheme: const IconThemeData(color: Colors.white),
+          flexibleSpace: Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  Color(0xFF0F2027),
+                  Color(0xFF203A43),
+                  Color(0xFF2C5364),
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+            ),
+          ),
+        ),
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -417,12 +437,16 @@ class _DestinationDetailScreenState extends State<DestinationDetailScreen> {
                 ),
                 child: Row(
                   children: [
-                    IconButton(
+                    TextButton.icon(
                       onPressed: _showCommentsModal,
                       icon: const Icon(
                         Icons.comment,
                         color: Colors.grey,
-                        size: 28,
+                        size: 24,
+                      ),
+                      label: const Text(
+                        'Komentar',
+                        style: TextStyle(color: Colors.grey),
                       ),
                     ),
                   ],

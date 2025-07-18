@@ -18,6 +18,7 @@ class _ManageCategoriesScreenState extends State<ManageCategoriesScreen> {
   final picker = ImagePicker();
   bool loading = false;
   List<Map<String, dynamic>> categories = [];
+  String searchQuery = '';
 
   @override
   void initState() {
@@ -38,6 +39,39 @@ class _ManageCategoriesScreenState extends State<ManageCategoriesScreen> {
     } finally {
       setState(() => loading = false);
     }
+  }
+
+  List<Map<String, dynamic>> get filteredCategories {
+    if (searchQuery.isEmpty) return categories;
+    return categories
+        .where(
+          (cat) =>
+              cat['nama']?.toString().toLowerCase().contains(
+                searchQuery.toLowerCase(),
+              ) ??
+              false,
+        )
+        .toList();
+  }
+
+  void _showError(String msg) {
+    Flushbar(
+      message: msg,
+      backgroundColor: Colors.red[600]!,
+      flushbarPosition: FlushbarPosition.TOP,
+      duration: const Duration(seconds: 3),
+      icon: const Icon(Icons.error, color: Colors.white),
+    ).show(context);
+  }
+
+  void _showTopSuccess(String msg) {
+    Flushbar(
+      message: msg,
+      backgroundColor: Colors.green[600]!,
+      flushbarPosition: FlushbarPosition.TOP,
+      duration: const Duration(seconds: 3),
+      icon: const Icon(Icons.check_circle, color: Colors.white),
+    ).show(context);
   }
 
   Future<void> _showAddModal() async {
@@ -191,9 +225,7 @@ class _ManageCategoriesScreenState extends State<ManageCategoriesScreen> {
                             }
                             formKey.currentState!.save();
                             Navigator.pop(context);
-
                             setState(() => loading = true);
-
                             try {
                               String? imageUrl;
                               if (imageFile != null) {
@@ -204,12 +236,10 @@ class _ManageCategoriesScreenState extends State<ManageCategoriesScreen> {
                                 await supabase.storage
                                     .from('kategori')
                                     .uploadBinary('kategori/$fileName', bytes);
-
                                 imageUrl = supabase.storage
                                     .from('kategori')
                                     .getPublicUrl('kategori/$fileName');
                               }
-
                               await supabase.from('kategori').insert({
                                 'nama': name,
                                 'deskripsi': desc,
@@ -217,7 +247,6 @@ class _ManageCategoriesScreenState extends State<ManageCategoriesScreen> {
                                 'latitude': lat,
                                 'longitude': lng,
                               });
-
                               _showTopSuccess('Kategori berhasil ditambahkan');
                               await _loadCategories();
                             } catch (e) {
@@ -239,122 +268,148 @@ class _ManageCategoriesScreenState extends State<ManageCategoriesScreen> {
     );
   }
 
-  void _showTopSuccess(String msg) {
-    Flushbar(
-      message: msg,
-      backgroundColor: Colors.green[600]!,
-      flushbarPosition: FlushbarPosition.TOP,
-      duration: const Duration(seconds: 3),
-      icon: const Icon(Icons.check_circle, color: Colors.white),
-    ).show(context);
-  }
-
-  void _showError(String msg) {
-    Flushbar(
-      message: msg,
-      backgroundColor: Colors.red[600]!,
-      flushbarPosition: FlushbarPosition.TOP,
-      duration: const Duration(seconds: 3),
-      icon: const Icon(Icons.error, color: Colors.white),
-    ).show(context);
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Kelola Kategori'),
-        backgroundColor: Colors.teal[700],
+        iconTheme: const IconThemeData(color: Colors.white),
+        title: const Text(
+          'Kelola Kategori',
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        ),
+        centerTitle: true,
+        flexibleSpace: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Color(0xFF008170), Color(0xFF00B686)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+        ),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
       ),
       body:
           loading
               ? const Center(child: CircularProgressIndicator())
-              : RefreshIndicator(
-                onRefresh: _loadCategories,
-                child: ListView.builder(
-                  padding: const EdgeInsets.all(12),
-                  itemCount: categories.length,
-                  itemBuilder: (_, i) {
-                    final cat = categories[i];
-                    return Card(
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+              : Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: TextField(
+                      decoration: InputDecoration(
+                        hintText: 'Cari destinasi...',
+                        prefixIcon: const Icon(Icons.search),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                       ),
-                      elevation: 2,
-                      margin: const EdgeInsets.only(bottom: 12),
-                      child: ListTile(
-                        leading:
-                            cat['gambar_url'] != null
-                                ? ClipRRect(
-                                  borderRadius: BorderRadius.circular(8),
-                                  child: Image.network(
-                                    cat['gambar_url'],
-                                    width: 56,
-                                    height: 56,
-                                    fit: BoxFit.cover,
-                                  ),
-                                )
-                                : const Icon(
-                                  Icons.category,
-                                  size: 40,
-                                  color: Colors.grey,
-                                ),
-                        title: Text(
-                          cat['nama'] ?? '-',
-                          style: const TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                        subtitle: Text(
-                          cat['deskripsi'] ?? '',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        trailing: IconButton(
-                          onPressed: () async {
-                            bool? confirm = await showDialog<bool>(
-                              context: context,
-                              builder:
-                                  (ctx) => AlertDialog(
-                                    title: const Text('Konfirmasi'),
-                                    content: const Text('Hapus kategori ini?'),
-                                    actions: [
-                                      TextButton(
-                                        onPressed:
-                                            () => Navigator.pop(ctx, false),
-                                        child: const Text('Batal'),
-                                      ),
-                                      TextButton(
-                                        onPressed:
-                                            () => Navigator.pop(ctx, true),
-                                        child: const Text(
-                                          'Hapus',
-                                          style: TextStyle(color: Colors.red),
+                      onChanged: (value) {
+                        setState(() => searchQuery = value);
+                      },
+                    ),
+                  ),
+                  Expanded(
+                    child: RefreshIndicator(
+                      onRefresh: _loadCategories,
+                      child: ListView.builder(
+                        padding: const EdgeInsets.all(12),
+                        itemCount: filteredCategories.length,
+                        itemBuilder: (_, i) {
+                          final cat = filteredCategories[i];
+                          return Card(
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            elevation: 2,
+                            margin: const EdgeInsets.only(bottom: 12),
+                            child: ListTile(
+                              leading:
+                                  cat['gambar_url'] != null
+                                      ? ClipRRect(
+                                        borderRadius: BorderRadius.circular(8),
+                                        child: Image.network(
+                                          cat['gambar_url'],
+                                          width: 56,
+                                          height: 56,
+                                          fit: BoxFit.cover,
                                         ),
+                                      )
+                                      : const Icon(
+                                        Icons.category,
+                                        size: 40,
+                                        color: Colors.grey,
                                       ),
-                                    ],
-                                  ),
-                            );
-                            if (confirm != true) return;
-
-                            setState(() => loading = true);
-                            try {
-                              await supabase
-                                  .from('kategori')
-                                  .delete()
-                                  .eq('id', cat['id']);
-                              _showTopSuccess('Kategori dihapus');
-                              await _loadCategories();
-                            } catch (e) {
-                              _showError('Gagal menghapus: $e');
-                            } finally {
-                              setState(() => loading = false);
-                            }
-                          },
-                          icon: const Icon(Icons.delete, color: Colors.red),
-                        ),
+                              title: Text(
+                                cat['nama'] ?? '-',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              subtitle: Text(
+                                cat['deskripsi'] ?? '',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              trailing: IconButton(
+                                onPressed: () async {
+                                  bool? confirm = await showDialog<bool>(
+                                    context: context,
+                                    builder:
+                                        (ctx) => AlertDialog(
+                                          title: const Text('Konfirmasi'),
+                                          content: const Text(
+                                            'Hapus kategori ini?',
+                                          ),
+                                          actions: [
+                                            TextButton(
+                                              onPressed:
+                                                  () =>
+                                                      Navigator.pop(ctx, false),
+                                              child: const Text('Batal'),
+                                            ),
+                                            TextButton(
+                                              onPressed:
+                                                  () =>
+                                                      Navigator.pop(ctx, true),
+                                              child: const Text(
+                                                'Hapus',
+                                                style: TextStyle(
+                                                  color: Colors.red,
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                  );
+                                  if (confirm != true) return;
+                                  setState(() => loading = true);
+                                  try {
+                                    await supabase
+                                        .from('kategori')
+                                        .delete()
+                                        .eq('id', cat['id']);
+                                    _showTopSuccess('Kategori dihapus');
+                                    await _loadCategories();
+                                  } catch (e) {
+                                    _showError('Gagal menghapus: $e');
+                                  } finally {
+                                    setState(() => loading = false);
+                                  }
+                                },
+                                icon: const Icon(
+                                  Icons.delete,
+                                  color: Colors.red,
+                                ),
+                              ),
+                            ),
+                          );
+                        },
                       ),
-                    );
-                  },
-                ),
+                    ),
+                  ),
+                ],
               ),
       floatingActionButton: FloatingActionButton(
         backgroundColor: Colors.teal[700],

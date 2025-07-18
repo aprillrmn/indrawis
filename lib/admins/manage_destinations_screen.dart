@@ -347,9 +347,25 @@ class _ManageDestinationsScreenState extends State<ManageDestinationsScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Kelola Destinasi'),
-        backgroundColor: const Color(0xFF008170),
+        iconTheme: const IconThemeData(color: Colors.white),
+        title: const Text(
+          'Kelola Destinasi',
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        ),
+        centerTitle: true,
+        flexibleSpace: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Color(0xFF008170), Color(0xFF00B686)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+        ),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
       ),
+
       floatingActionButton: FloatingActionButton(
         onPressed: _addDestination,
         backgroundColor: const Color(0xFF008170),
