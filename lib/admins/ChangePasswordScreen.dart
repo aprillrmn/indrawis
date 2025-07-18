@@ -156,10 +156,32 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
     const mainColor = Color(0xFF008170);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Ubah Kata Sandi'),
-        backgroundColor: mainColor,
-        elevation: 0,
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(kToolbarHeight),
+        child: AppBar(
+          automaticallyImplyLeading: true,
+          iconTheme: const IconThemeData(color: Colors.white),
+          flexibleSpace: Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  Color(0xFF0F2027),
+                  Color(0xFF203A43),
+                  Color(0xFF2C5364),
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+            ),
+          ),
+          title: const Text(
+            'Ubah Kata Sandi',
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+          ),
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          centerTitle: true,
+        ),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24),

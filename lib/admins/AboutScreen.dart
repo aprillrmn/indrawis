@@ -24,13 +24,38 @@ class _AboutScreenState extends State<AboutScreen> {
 
   @override
   Widget build(BuildContext context) {
+    const mainColor = Color(0xFF008170);
+    const textColor = Color(0xFF232D3F);
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF9F9F9),
-      appBar: AppBar(
-        title: const Text('Tentang Aplikasi'),
-        backgroundColor: const Color(0xFF008170),
-        elevation: 2,
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(kToolbarHeight),
+        child: AppBar(
+          automaticallyImplyLeading: true,
+          iconTheme: const IconThemeData(color: Colors.white),
+          flexibleSpace: Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  Color(0xFF0F2027),
+                  Color(0xFF203A43),
+                  Color(0xFF2C5364),
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+            ),
+          ),
+          title: const Text(
+            'Tentang Aplikasi',
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+          ),
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          centerTitle: true,
+        ),
       ),
+      backgroundColor: const Color(0xFFF9F9F9),
       body: SafeArea(
         child: AnimatedOpacity(
           opacity: _opacity,
@@ -48,11 +73,14 @@ class _AboutScreenState extends State<AboutScreen> {
                       style: TextStyle(
                         fontSize: 28,
                         fontWeight: FontWeight.bold,
-                        color: Color(0xFF232D3F),
+                        color: textColor,
                       ),
                     ),
-                    SizedBox(height: 4),
-                    Text('Versi 1.0.0', style: TextStyle(color: Colors.grey)),
+                    const SizedBox(height: 4),
+                    const Text(
+                      'Versi 1.0.0',
+                      style: TextStyle(color: Colors.grey),
+                    ),
                   ],
                 ),
               ),
@@ -72,7 +100,7 @@ class _AboutScreenState extends State<AboutScreen> {
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
-                          color: Color(0xFF008170),
+                          color: mainColor,
                         ),
                       ),
                       SizedBox(height: 12),
@@ -103,14 +131,14 @@ class _AboutScreenState extends State<AboutScreen> {
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
-                          color: Color(0xFF008170),
+                          color: mainColor,
                         ),
                       ),
                       const SizedBox(height: 12),
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
-                          const Icon(Icons.email, color: Color(0xFF008170)),
+                          const Icon(Icons.email, color: mainColor),
                           const SizedBox(width: 12),
                           Expanded(
                             child: InkWell(
@@ -119,7 +147,7 @@ class _AboutScreenState extends State<AboutScreen> {
                                 'apriliadyrahman9@gmail.com',
                                 style: TextStyle(
                                   fontSize: 16,
-                                  color: Color(0xFF008170),
+                                  color: mainColor,
                                   decoration: TextDecoration.underline,
                                 ),
                               ),
@@ -133,7 +161,7 @@ class _AboutScreenState extends State<AboutScreen> {
                         children: [
                           const FaIcon(
                             FontAwesomeIcons.instagram,
-                            color: Color(0xFF008170),
+                            color: mainColor,
                             size: 20,
                           ),
                           const SizedBox(width: 12),
@@ -144,7 +172,7 @@ class _AboutScreenState extends State<AboutScreen> {
                                 '@dispara_indramayu',
                                 style: TextStyle(
                                   fontSize: 16,
-                                  color: Color(0xFF008170),
+                                  color: mainColor,
                                   decoration: TextDecoration.underline,
                                 ),
                               ),
@@ -163,10 +191,10 @@ class _AboutScreenState extends State<AboutScreen> {
                   borderRadius: BorderRadius.circular(16),
                 ),
                 elevation: 3,
-                child: Padding(
-                  padding: const EdgeInsets.all(20),
+                child: const Padding(
+                  padding: EdgeInsets.all(20),
                   child: Row(
-                    children: const [
+                    children: [
                       Icon(Icons.copyright, color: Colors.grey, size: 28),
                       SizedBox(width: 16),
                       Expanded(

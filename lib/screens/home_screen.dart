@@ -1,14 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:new_apk/admins/setting_screen.dart';
-import 'package:new_apk/kontens/kuliner_screen.dart';
-import 'package:new_apk/kontens/penginapan_screen.dart';
-import 'package:new_apk/kontens/religi_screen.dart';
-import 'package:new_apk/screens/destination_detail.dart';
 import 'package:new_apk/models/edit_profile_screen.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'dart:math';
 
 class MyHomeScreen extends StatefulWidget {
   const MyHomeScreen({super.key});
@@ -18,483 +14,368 @@ class MyHomeScreen extends StatefulWidget {
 }
 
 class _MyHomeScreenState extends State<MyHomeScreen> {
-  GoogleMapController? _googleMapController;
-  LatLng? _currentPosition;
-  bool _locationRequested = false;
-  bool _isLoading = false;
-
-  // Tambahan: kategori yang dipilih (null = semua)
-
-  List<Map<String, dynamic>> _destinations = [];
+  final supabase = Supabase.instance.client;
+  List<dynamic> destinasi = [];
+  LatLng? userLocation;
+  GoogleMapController? mapController;
+  List<dynamic> filteredDestinasi = [];
+  TextEditingController searchController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
-    _fetchDestinations(); // load semua kategori awalnya
+    fetchDestinasi();
+    getUserLocation();
   }
 
-  Future<void> _fetchDestinations({String? kategori}) async {
-    setState(() => _isLoading = true);
-    try {
-      // Siapkan query dengan kolom kategori
-      var query = Supabase.instance.client
-          .from('konten')
-          .select(
-            'id, judul, deskripsi, gambar_url, latitude, longitude, kategori',
-          );
-
-      // Jika ada filter kategori, tambahkan
-      if (kategori != null) {
-        query = query.eq('kategori', kategori);
-      }
-
-      // Ambil data
-      final response = await query;
-      // Ubah menjadi List<Map>
-      _destinations = List<Map<String, dynamic>>.from(response as List);
-    } catch (e) {
-      debugPrint('Error fetch destinations: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Gagal mengambil data destinasi: $e')),
-      );
-    } finally {
-      setState(() => _isLoading = false);
-    }
+  Future<void> fetchDestinasi() async {
+    final response = await supabase.from('konten').select();
+    setState(() {
+      destinasi = response;
+      filteredDestinasi = response;
+    });
   }
 
-  Future<void> _determinePosition() async {
-    setState(() => _isLoading = true);
-    try {
-      if (!await Geolocator.isLocationServiceEnabled()) {
-        await Geolocator.openLocationSettings();
+  Future<void> getUserLocation() async {
+    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) return;
+
+    LocationPermission permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied ||
+        permission == LocationPermission.deniedForever) {
+      permission = await Geolocator.requestPermission();
+      if (permission != LocationPermission.whileInUse &&
+          permission != LocationPermission.always)
         return;
-      }
-      var permission = await Geolocator.checkPermission();
-      if (permission == LocationPermission.denied) {
-        permission = await Geolocator.requestPermission();
-        if (permission == LocationPermission.denied) return;
-      }
-      if (permission == LocationPermission.deniedForever) return;
-
-      final pos = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high,
-      );
-      setState(() {
-        _currentPosition = LatLng(pos.latitude, pos.longitude);
-        _locationRequested = true;
-      });
-      _googleMapController?.animateCamera(
-        CameraUpdate.newLatLngZoom(_currentPosition!, 14),
-      );
-    } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Gagal mendapatkan lokasi: $e')));
-    } finally {
-      setState(() => _isLoading = false);
-    }
-  }
-
-  List<Map<String, dynamic>> getFilteredAndSortedDestinations() {
-    final filtered = [..._destinations];
-    if (_currentPosition == null) return filtered;
-
-    for (var d in filtered) {
-      d['distance'] = Geolocator.distanceBetween(
-        _currentPosition!.latitude,
-        _currentPosition!.longitude,
-        double.tryParse(d['latitude'].toString()) ?? 0.0,
-        double.tryParse(d['longitude'].toString()) ?? 0.0,
-      );
     }
 
-    filtered.sort(
-      (a, b) => (a['distance'] as double).compareTo(b['distance'] as double),
+    Position position = await Geolocator.getCurrentPosition(
+      desiredAccuracy: LocationAccuracy.high,
     );
-    return filtered;
+    setState(() {
+      userLocation = LatLng(position.latitude, position.longitude);
+    });
   }
 
-  void showDetailBottomSheet(Map<String, dynamic> destination) {
-    showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) {
-        return Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                destination['judul'] ?? '',
-                style: const TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 10),
-              Text(destination['deskripsi'] ?? ''),
-              const SizedBox(height: 10),
-              Text(
-                'Lokasi: ${destination['latitude']}, ${destination['longitude']}',
-                style: const TextStyle(fontStyle: FontStyle.italic),
-              ),
-              const SizedBox(height: 20),
-              ElevatedButton.icon(
-                onPressed:
-                    () => _openRoute(
-                      LatLng(
-                        double.tryParse(destination['latitude'].toString()) ??
-                            0.0,
-                        double.tryParse(destination['longitude'].toString()) ??
-                            0.0,
-                      ),
-                    ),
-                icon: const Icon(Icons.directions),
-                label: const Text('Buka Rute di Google Maps'),
-              ),
-            ],
+  double calculateDistance(double lat1, double lon1, double lat2, double lon2) {
+    const p = 0.0174533;
+    final a =
+        0.5 -
+        cos((lat2 - lat1) * p) / 2 +
+        cos(lat1 * p) * cos(lat2 * p) * (1 - cos((lon2 - lon1) * p)) / 2;
+    return 12742 * asin(sqrt(a));
+  }
+
+  void filterDestinasi(String query) {
+    setState(() {
+      filteredDestinasi =
+          destinasi.where((item) {
+            final title = item['judul'].toString().toLowerCase();
+            return title.contains(query.toLowerCase());
+          }).toList();
+    });
+  }
+
+  Widget buildMenuIcon(IconData icon, String label) {
+    return GestureDetector(
+      onTap: () {
+        // Navigasi berdasarkan label menu
+        Navigator.pushNamed(context, '/${label.toLowerCase()}');
+      },
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.blue.shade100,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(icon, color: Colors.blue.shade900),
           ),
+          const SizedBox(height: 6),
+          Text(label, style: const TextStyle(fontSize: 12)),
+        ],
+      ),
+    );
+  }
+
+  Widget buildDestinasiCard(dynamic data) {
+    double? distance;
+    if (userLocation != null &&
+        data['latitude'] != null &&
+        data['longitude'] != null) {
+      distance = calculateDistance(
+        userLocation!.latitude,
+        userLocation!.longitude,
+        data['latitude'],
+        data['longitude'],
+      );
+    }
+
+    return GestureDetector(
+      onTap: () {
+        Navigator.pushNamed(
+          context,
+          '/detail',
+          arguments: {
+            'title': data['judul'],
+            'description': data['deskripsi'],
+            'imageUrl': data['gambar_url'],
+            'latitude': data['latitude'],
+            'longitude': data['longitude'],
+          },
         );
       },
-    );
-  }
-
-  Future<void> _openRoute(LatLng dest) async {
-    final uri = Uri.parse(
-      'https://www.google.com/maps/dir/?api=1&destination=${dest.latitude},${dest.longitude}&travelmode=driving',
-    );
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Tidak dapat membuka Google Maps')),
-      );
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final list = getFilteredAndSortedDestinations();
-
-    if (_isLoading && !_locationRequested) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
-    }
-
-    if (!_locationRequested) {
-      return Scaffold(
-        body: Center(
+      child: SizedBox(
+        width: 160,
+        child: Card(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          elevation: 2,
+          clipBehavior: Clip.antiAlias,
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(Icons.travel_explore, size: 80, color: Colors.green),
-              const SizedBox(height: 20),
-              const Text(
-                'Selamat Datang Traveler Kece',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              Expanded(
+                child: Image.network(
+                  data['gambar_url'],
+                  width: double.infinity,
+                  fit: BoxFit.cover,
+                ),
               ),
-              const SizedBox(height: 40),
-              ElevatedButton.icon(
-                onPressed: _determinePosition,
-                icon: const Icon(Icons.location_searching),
-                label: const Text('Gunakan Lokasi Saya'),
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 24,
-                    vertical: 12,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(30),
-                  ),
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      data['judul'],
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    if (distance != null)
+                      Text(
+                        '${distance.toStringAsFixed(2)} km dari lokasi Anda',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey,
+                        ),
+                      ),
+                  ],
                 ),
               ),
             ],
           ),
         ),
-      );
-    }
+      ),
+    );
+  }
 
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Destinasi Wisata'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.settings),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => SettingsScreen()),
-              );
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.person),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const EditProfileScreen(),
-                ),
-              );
-            },
-          ),
-        ],
-      ),
-
-      body: Column(
-        children: [
-          // === BAR FILTER KATEGORI ===
-          Container(
-            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-            color: Colors.white,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                _buildCategoryChip('Religi'),
-                _buildCategoryChip('Kuliner'),
-                _buildCategoryChip('Penginapan'),
-              ],
-            ),
-          ),
-
-          // === PETA ===
-          Expanded(
-            flex: 2,
-            child: GoogleMap(
-              initialCameraPosition: CameraPosition(
-                target: _currentPosition!,
-                zoom: 14,
-              ),
-              myLocationEnabled: true,
-              markers: {
-                Marker(
-                  markerId: const MarkerId('current'),
-                  position: _currentPosition!,
-                  infoWindow: const InfoWindow(title: 'Lokasi Saya'),
-                ),
-                ...list.map(
-                  (d) => Marker(
-                    markerId: MarkerId('${d['id']}'),
-                    position: LatLng(
-                      double.parse(d['latitude'].toString()),
-                      double.parse(d['longitude'].toString()),
-                    ),
-                    infoWindow: InfoWindow(
-                      title: d['judul'],
-                      snippet: d['deskripsi'],
-                      onTap: () => showDetailBottomSheet(d),
-                    ),
-                    onTap: () => showDetailBottomSheet(d),
-                  ),
-                ),
-              },
-              onMapCreated: (c) => _googleMapController = c,
-            ),
-          ),
-
-          // === DAFTAR DESTINASI ===
-          Expanded(flex: 1, child: buildDestinationList(list)),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildCategoryChip(String kategori) {
-    IconData iconData;
-    Widget screen;
-    switch (kategori) {
-      case 'Religi':
-        iconData = Icons.church;
-        screen = ReligiScreen();
-        break;
-      case 'Kuliner':
-        iconData = Icons.restaurant;
-        screen = KulinerScreen();
-        break;
-      case 'Penginapan':
-        iconData = Icons.hotel;
-        screen = PenginapanScreen();
-        break;
-      default:
-        iconData = Icons.category;
-        screen = MyHomeScreen();
-    }
-
-    return ActionChip(
-      avatar: Icon(iconData, size: 20, color: Colors.white),
-      label: Text(kategori, style: const TextStyle(color: Colors.white)),
-      backgroundColor: Colors.green,
-      onPressed: () {
-        // Redirect ke halaman kategori yang sesuai
-        Navigator.push(context, MaterialPageRoute(builder: (_) => screen));
-      },
-    );
-  }
-
-  Widget buildDestinationList(List<Map<String, dynamic>> list) {
-    return Container(
-      padding: const EdgeInsets.all(8),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black12,
-            blurRadius: 8,
-            offset: Offset(0, -2),
-          ),
-        ],
-      ),
-      child:
-          list.isEmpty
-              ? const Center(child: Text('Belum ada destinasi'))
-              : ListView.separated(
-                itemCount: list.length,
-                separatorBuilder: (_, __) => const SizedBox(height: 8),
-                itemBuilder: (_, i) {
-                  final d = list[i];
-                  final imgUrl = (d['gambar_url'] ?? '').toString();
-
-                  return InkWell(
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder:
-                              (_) => DestinationDetailScreen(
-                                kontenId: int.tryParse(d['id'].toString()) ?? 0,
-                                heroTag: 'hero_${d['id']}',
-                                title: d['judul'] ?? '',
-                                description: d['deskripsi'] ?? '',
-                                imageUrl: imgUrl,
-                                latitude:
-                                    double.tryParse(d['latitude'].toString()) ??
-                                    0.0,
-                                longitude:
-                                    double.tryParse(
-                                      d['longitude'].toString(),
-                                    ) ??
-                                    0.0,
-                                destination: {},
-                              ),
+      backgroundColor: Colors.white,
+      body: SafeArea(
+        child:
+            userLocation == null
+                ? const Center(child: CircularProgressIndicator())
+                : Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // === HEADER: Logo + Teks + Icon Settings & Profile ===
+                    Container(
+                      decoration: const BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            Color(0xFF0F2027),
+                            Color(0xFF203A43),
+                            Color(0xFF2C5364),
+                          ],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
                         ),
-                      );
-                    },
-                    borderRadius: BorderRadius.circular(12),
-                    child: Card(
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
                       ),
-                      elevation: 3,
-                      child: Padding(
-                        padding: const EdgeInsets.all(12),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            ClipRRect(
-                              borderRadius: BorderRadius.circular(8),
-                              child:
-                                  imgUrl.isNotEmpty
-                                      ? Hero(
-                                        tag: 'hero_${d['id']}',
-                                        child: Image.network(
-                                          imgUrl,
-                                          width: 80,
-                                          height: 80,
-                                          fit: BoxFit.cover,
-                                          loadingBuilder: (
-                                            context,
-                                            child,
-                                            loadingProgress,
-                                          ) {
-                                            if (loadingProgress == null)
-                                              return child;
-                                            return Container(
-                                              width: 80,
-                                              height: 80,
-                                              color: Colors.grey.shade200,
-                                              child: const Center(
-                                                child:
-                                                    CircularProgressIndicator(
-                                                      strokeWidth: 2,
-                                                    ),
-                                              ),
-                                            );
-                                          },
-                                          errorBuilder: (
-                                            context,
-                                            error,
-                                            stackTrace,
-                                          ) {
-                                            return Container(
-                                              width: 80,
-                                              height: 80,
-                                              color: Colors.grey.shade300,
-                                              child: const Icon(
-                                                Icons.broken_image,
-                                                size: 40,
-                                                color: Colors.grey,
-                                              ),
-                                            );
-                                          },
-                                        ),
-                                      )
-                                      : Container(
-                                        width: 80,
-                                        height: 80,
-                                        color: Colors.grey.shade300,
-                                        child: const Icon(
-                                          Icons.image,
-                                          size: 40,
-                                          color: Colors.grey,
-                                        ),
-                                      ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Column(
+                      padding: const EdgeInsets.symmetric(horizontal: 10),
+                      height: 80,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          // Logo dan Teks
+                          Row(
+                            children: [
+                              Container(
+                                width: 60,
+                                height: 60,
+                                decoration: const BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  image: DecorationImage(
+                                    image: AssetImage('assets/images/awal.png'),
+                                    fit: BoxFit.cover,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              const Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    d['judul'] ?? '',
-                                    style: const TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    d['deskripsi'] ?? '',
-                                    maxLines: 2,
-                                    overflow: TextOverflow.ellipsis,
+                                    'Indramayu',
                                     style: TextStyle(
-                                      fontSize: 13,
-                                      color: Colors.grey.shade700,
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white,
                                     ),
                                   ),
-                                  const SizedBox(height: 6),
-                                  if (_currentPosition != null &&
-                                      d.containsKey('distance'))
-                                    Text(
-                                      '${(d['distance'] / 1000).toStringAsFixed(2)} km dari posisi Anda',
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        color: Colors.green.shade700,
-                                      ),
+                                  Text(
+                                    'Wisata',
+                                    style: TextStyle(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white70,
                                     ),
+                                  ),
                                 ],
                               ),
-                            ),
-                            const Icon(Icons.chevron_right, color: Colors.grey),
+                            ],
+                          ),
+
+                          // Icon Setting & Profile
+                          Row(
+                            children: [
+                              IconButton(
+                                icon: const Icon(
+                                  Icons.settings,
+                                  color: Colors.white,
+                                ),
+                                onPressed: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => SettingsScreen(),
+                                    ),
+                                  );
+                                },
+                              ),
+                              IconButton(
+                                icon: const Icon(
+                                  Icons.account_circle,
+                                  color: Colors.white,
+                                ),
+                                onPressed: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => EditProfileScreen(),
+                                    ),
+                                  );
+                                },
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    // Google Map View (fixed height)
+                    SizedBox(
+                      height: 160,
+                      child: GoogleMap(
+                        initialCameraPosition: CameraPosition(
+                          target: userLocation!,
+                          zoom: 14,
+                        ),
+                        markers: {
+                          Marker(
+                            markerId: const MarkerId('userLocation'),
+                            position: userLocation!,
+                            infoWindow: const InfoWindow(title: 'Lokasi Anda'),
+                          ),
+                        },
+                        onMapCreated: (controller) {
+                          mapController = controller;
+                        },
+                      ),
+                    ),
+
+                    // Search Bar
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
+                      child: TextField(
+                        controller: searchController,
+                        decoration: InputDecoration(
+                          hintText: 'Cari destinasi...',
+                          prefixIcon: const Icon(Icons.search),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        onChanged: filterDestinasi,
+                      ),
+                    ),
+
+                    const SizedBox(height: 15),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: SizedBox(
+                        height: 150,
+                        child: GridView.count(
+                          crossAxisCount: 4,
+                          physics: const NeverScrollableScrollPhysics(),
+                          childAspectRatio: 1,
+                          crossAxisSpacing: 10,
+                          mainAxisSpacing: 10,
+                          children: [
+                            buildMenuIcon(Icons.place, 'Religi'),
+                            buildMenuIcon(Icons.event, 'Aktivitas'),
+                            buildMenuIcon(Icons.hotel, 'Akomodasi'),
+                            buildMenuIcon(Icons.restaurant, 'Kuliner'),
+                            buildMenuIcon(Icons.directions_car, 'Transportasi'),
+                            buildMenuIcon(Icons.pedal_bike, 'Sewa'),
+                            buildMenuIcon(Icons.shopping_cart, 'Oleh-oleh'),
+                            buildMenuIcon(Icons.map, 'Paket'),
                           ],
                         ),
                       ),
                     ),
-                  );
-                },
-              ),
+                    const SizedBox(height: 45),
+                    const Padding(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
+                      child: Text(
+                        'Rekomendasi Destinasi',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+
+                    SizedBox(
+                      height: 170,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: ListView.separated(
+                          scrollDirection: Axis.horizontal,
+                          itemCount: filteredDestinasi.length,
+                          separatorBuilder:
+                              (_, __) => const SizedBox(width: 12),
+                          itemBuilder: (context, index) {
+                            return buildDestinasiCard(filteredDestinasi[index]);
+                          },
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+      ),
     );
   }
 }

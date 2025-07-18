@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 class CategoryScreen extends StatefulWidget {
   final int kategoriId;
@@ -86,92 +85,32 @@ class _CategoryScreenState extends State<CategoryScreen> {
     }
   }
 
-  Future<void> _showDetailModal(
-    Map<String, dynamic> data,
-    double? jarakKm,
-  ) async {
-    await showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (_) {
-        return Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                data['nama'] ?? '-',
-                style: const TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              if (data['deskripsi'] != null) ...[
-                const SizedBox(height: 8),
-                Text(
-                  data['deskripsi'],
-                  style: const TextStyle(fontSize: 14, color: Colors.black87),
-                ),
-              ],
-              if (jarakKm != null) ...[
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    const Icon(Icons.location_on, color: Colors.teal, size: 20),
-                    const SizedBox(width: 4),
-                    Text('${jarakKm.toStringAsFixed(2)} km dari Anda'),
-                  ],
-                ),
-              ],
-              const SizedBox(height: 16),
-              const Text(
-                "Yuk kunjungi tempat ini sekarang juga!",
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
-              ),
-              const SizedBox(height: 20),
-              Center(
-                child: ElevatedButton.icon(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.teal,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 24,
-                      vertical: 12,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  icon: const Icon(Icons.map),
-                  label: const Text("Buka di Google Maps"),
-                  onPressed: () {
-                    final lat = data['latitude']?.toDouble();
-                    final lng = data['longitude']?.toDouble();
-                    if (lat != null && lng != null) {
-                      final uri = Uri.parse(
-                        "https://www.google.com/maps/search/?api=1&query=$lat,$lng",
-                      );
-                      launchUrl(uri, mode: LaunchMode.externalApplication);
-                    }
-                  },
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.title),
-        elevation: 0,
-        backgroundColor: Colors.teal[700],
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(kToolbarHeight),
+        child: AppBar(
+          title: Text(
+            widget.title,
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+          ),
+          automaticallyImplyLeading: true,
+          iconTheme: const IconThemeData(color: Colors.white),
+          flexibleSpace: Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  Color(0xFF0F2027),
+                  Color(0xFF203A43),
+                  Color(0xFF2C5364),
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+            ),
+          ),
+        ),
       ),
       body:
           _isLoading
@@ -192,9 +131,23 @@ class _CategoryScreenState extends State<CategoryScreen> {
                       d.containsKey('distance')
                           ? (d['distance'] as double) / 1000
                           : null;
-
                   return GestureDetector(
-                    onTap: () => _showDetailModal(d, jarakKm),
+                    onTap:
+                        () => Navigator.pushNamed(
+                          context,
+                          '/detail',
+                          arguments: {
+                            'title': d['nama'],
+                            'description': d['deskripsi'],
+                            'imageUrl': d['gambar_url'],
+                            'latitude': d['latitude'],
+                            'longitude': d['longitude'],
+                            'heroTag': '',
+                            'destination': d,
+                            'kontenId': d['id'],
+                            'destinasi': d,
+                          },
+                        ),
                     child: Container(
                       margin: const EdgeInsets.only(bottom: 16),
                       decoration: BoxDecoration(

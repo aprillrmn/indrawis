@@ -45,7 +45,7 @@ class _IntroScreenState extends State<IntroScreen>
   void initState() {
     super.initState();
     _setupAnimations();
-    _startAutoSlide();
+    // _startAutoSlide();
   }
 
   void _setupAnimations() {
@@ -77,17 +77,17 @@ class _IntroScreenState extends State<IntroScreen>
     _animController.forward();
   }
 
-  void _startAutoSlide() {
-    _timer?.cancel();
-    _timer = Timer.periodic(const Duration(seconds: 3), (timer) {
-      int nextPage = (_currentPage + 1) % introData.length;
-      _pageController.animateToPage(
-        nextPage,
-        duration: const Duration(milliseconds: 600),
-        curve: Curves.easeInOut,
-      );
-    });
-  }
+  // void _startAutoSlide() {
+  //   _timer?.cancel();
+  //   _timer = Timer.periodic(const Duration(seconds: 3), (timer) {
+  //     int nextPage = (_currentPage + 1) % introData.length;
+  //     _pageController.animateToPage(
+  //       nextPage,
+  //       duration: const Duration(milliseconds: 600),
+  //       curve: Curves.easeInOut,
+  //     );
+  //   });
+  // }
 
   void _onPageChanged(int index) {
     setState(() {
@@ -95,7 +95,7 @@ class _IntroScreenState extends State<IntroScreen>
     });
     _animController.reset();
     _animController.forward();
-    _startAutoSlide();
+    // _startAutoSlide();
   }
 
   void _nextPage() {
@@ -144,7 +144,7 @@ class _IntroScreenState extends State<IntroScreen>
         ),
 
         Positioned(
-          bottom: 500, 
+          bottom: 500,
           left: 20,
           right: 20,
           child: SlideTransition(

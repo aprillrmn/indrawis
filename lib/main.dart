@@ -2,6 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:new_apk/kontens/kuliner_screen.dart';
 import 'package:new_apk/kontens/penginapan_screen.dart';
 import 'package:new_apk/kontens/religi_screen.dart';
+import 'package:new_apk/kontens/aktivitas_screen.dart';
+import 'package:new_apk/kontens/oleh_screen.dart';
+import 'package:new_apk/kontens/paket_screen.dart';
+import 'package:new_apk/kontens/sewa_screen.dart';
+import 'package:new_apk/kontens/transportasi_screen.dart';
 import 'package:new_apk/screens/destination_detail.dart';
 import 'package:new_apk/screens/home_screen.dart';
 import 'package:new_apk/screens/intro_screen.dart';
@@ -110,26 +115,48 @@ class MyApp extends StatelessWidget {
         '/religi': (context) => const ReligiScreen(),
         '/kuliner': (context) => const KulinerScreen(),
         '/penginapan': (context) => const PenginapanScreen(),
+
+        '/amazing': (_) => const ReligiScreen(),
+        '/aktivitas': (_) => const AktivitasScreen(),
+        '/akomodasi': (_) => const PenginapanScreen(),
+        '/restoran': (_) => const KulinerScreen(),
+        '/transportasi': (_) => const TransportasiScreen(),
+        '/sewa': (_) => const SewaScreen(),
+        '/oleh-oleh': (_) => const OlehOlehScreen(),
+        '/paket': (_) => const PaketScreen(),
       },
 
       // ROUTE DINAMIS
       onGenerateRoute: (settings) {
         if (settings.name == '/detail') {
-          final args = settings.arguments as Map<String, dynamic>;
-          return MaterialPageRoute(
-            builder:
-                (_) => DestinationDetailScreen(
-                  title: args['title'] as String,
-                  description: args['description'] as String,
-                  imageUrl: args['imageUrl'] as String,
-                  latitude: args['latitude'] as double,
-                  longitude: args['longitude'] as double,
-                  heroTag: '',
-                  destination: {},
-                  kontenId: 0,
-                ),
-          );
+          final args = settings.arguments;
+
+          if (args is Map<String, dynamic>) {
+            return MaterialPageRoute(
+              builder:
+                  (_) => DestinationDetailScreen(
+                    title: args['title']?.toString() ?? 'Judul Tidak Ditemukan',
+                    description: args['description']?.toString() ?? '',
+                    imageUrl: args['imageUrl']?.toString() ?? '',
+                    latitude: (args['latitude'] ?? 0.0).toDouble(),
+                    longitude: (args['longitude'] ?? 0.0).toDouble(),
+                    kontenId: args['kontenId'] ?? 0,
+                    destination: args['destination'] ?? {},
+                    heroTag: args['heroTag'] ?? '',
+                    destinasi: args['destinasi'],
+                  ),
+            );
+          } else {
+            return MaterialPageRoute(
+              builder:
+                  (_) => Scaffold(
+                    appBar: AppBar(title: const Text("Error")),
+                    body: const Center(child: Text("Argument tidak valid")),
+                  ),
+            );
+          }
         }
+
         return null;
       },
     );

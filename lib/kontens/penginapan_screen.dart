@@ -6,9 +6,6 @@ class PenginapanScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const CategoryScreen(
-      kategoriId: 3, 
-      title: 'Destinasi Penginapan',
-    );
+    return const CategoryScreen(kategoriId: 3, title: 'Akomodasi');
   }
 }

@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:new_apk/admins/ChangePasswordScreen.dart';
 import 'package:new_apk/services/auth_service.dart';
 import 'package:new_apk/screens/login_screen.dart';
-import 'package:provider/provider.dart';
-import '../providers/theme_provider.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -17,15 +15,36 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final themeProvider = Provider.of<ThemeProvider>(context);
     const mainColor = Color(0xFF008170);
     const textColor = Color(0xFF232D3F);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Pengaturan'),
-        backgroundColor: mainColor,
-        foregroundColor: Colors.white,
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(kToolbarHeight),
+        child: AppBar(
+          automaticallyImplyLeading: true,
+          iconTheme: const IconThemeData(color: Colors.white),
+          flexibleSpace: Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  Color(0xFF0F2027),
+                  Color(0xFF203A43),
+                  Color(0xFF2C5364),
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+            ),
+          ),
+          title: const Text(
+            'Pengaturan',
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+          ),
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          centerTitle: true,
+        ),
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -77,22 +96,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 iconColor: mainColor,
                 onTap: () => Navigator.pushNamed(context, '/about'),
               ),
-              const SizedBox(height: 8),
-              Card(
-                elevation: 2,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: SwitchListTile(
-                  title: const Text('Mode Gelap'),
-                  secondary: const Icon(Icons.dark_mode),
-                  value: themeProvider.isDarkMode,
-                  activeColor: mainColor,
-                  onChanged: (value) {
-                    themeProvider.toggleTheme();
-                  },
-                ),
-              ),
             ],
           ),
         ),
@@ -132,7 +135,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
               TextButton(
                 onPressed: () async {
-                  Navigator.of(context).pop(); 
+                  Navigator.of(context).pop();
                   final navigator = Navigator.of(context);
 
                   await authService.logout();

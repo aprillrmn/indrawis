@@ -52,7 +52,7 @@ class AdminHomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Dashboard Admin'),
+        backgroundColor: const Color(0xFF008170),
         actions: [
           IconButton(
             icon: const Icon(Icons.logout),
@@ -60,42 +60,82 @@ class AdminHomeScreen extends StatelessWidget {
           ),
         ],
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: GridView.count(
-          crossAxisCount: 2,
-          crossAxisSpacing: 16,
-          mainAxisSpacing: 16,
-          children: [
-            AdminMenuItem(
-              icon: Icons.place,
-              label: 'Kelola Destinasi',
-              onTap: () {
-                Navigator.pushNamed(context, '/admin/manage-destinations');
-              },
-            ),
-            AdminMenuItem(
-              icon: Icons.category_outlined,
-              label: 'Kelola Kategori',
-              onTap: () {
-                Navigator.pushNamed(context, '/admin/manage-users');
-              },
-            ),
-            AdminMenuItem(
-              icon: Icons.comment,
-              label: 'Kelola Komentar',
-              onTap: () {
-                Navigator.pushNamed(context, '/admin/manage-comments');
-              },
-            ),
-            AdminMenuItem(
-              icon: Icons.settings,
-              label: 'Pengaturan',
-              onTap: () {
-                Navigator.pushNamed(context, '/settings');
-              },
-            ),
-          ],
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Color(0xFF008170), Color(0xFF232D3F)],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: const [
+                  Icon(
+                    Icons.admin_panel_settings,
+                    color: Colors.white,
+                    size: 40,
+                  ),
+                  SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      'Selamat Datang di Dashboard Admin',
+                      style: TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 25),
+              Expanded(
+                child: GridView.count(
+                  crossAxisCount: 2,
+                  crossAxisSpacing: 16,
+                  mainAxisSpacing: 16,
+                  children: [
+                    AdminMenuItem(
+                      icon: Icons.place,
+                      label: 'Kelola Destinasi',
+                      onTap: () {
+                        Navigator.pushNamed(
+                          context,
+                          '/admin/manage-destinations',
+                        );
+                      },
+                    ),
+                    AdminMenuItem(
+                      icon: Icons.category_outlined,
+                      label: 'Kelola Kategori',
+                      onTap: () {
+                        Navigator.pushNamed(context, '/admin/manage-users');
+                      },
+                    ),
+                    AdminMenuItem(
+                      icon: Icons.comment,
+                      label: 'Kelola Komentar',
+                      onTap: () {
+                        Navigator.pushNamed(context, '/admin/manage-comments');
+                      },
+                    ),
+                    AdminMenuItem(
+                      icon: Icons.settings,
+                      label: 'Pengaturan',
+                      onTap: () {
+                        Navigator.pushNamed(context, '/settings');
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -119,6 +159,7 @@ class AdminMenuItem extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Card(
+        color: Colors.white,
         elevation: 4,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         child: Center(
