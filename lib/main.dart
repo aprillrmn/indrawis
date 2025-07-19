@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'package:new_apk/kontens/kuliner_screen.dart';
 import 'package:new_apk/kontens/penginapan_screen.dart';
 import 'package:new_apk/kontens/religi_screen.dart';
 import 'package:new_apk/kontens/aktivitas_screen.dart';
 import 'package:new_apk/kontens/oleh_screen.dart';
-import 'package:new_apk/kontens/paket_screen.dart';
-import 'package:new_apk/kontens/sewa_screen.dart';
 import 'package:new_apk/kontens/transportasi_screen.dart';
 import 'package:new_apk/screens/destination_detail.dart';
 import 'package:new_apk/screens/home_screen.dart';
@@ -30,6 +29,10 @@ import 'package:new_apk/admins/ChangePasswordScreen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  //date catatan kunjungan
+  await initializeDateFormatting('id_ID', null);
+
   await Supabase.initialize(
     url: 'https://qfkkurgzfspapoufusdd.supabase.co',
     anonKey:
@@ -121,9 +124,7 @@ class MyApp extends StatelessWidget {
         '/akomodasi': (_) => const PenginapanScreen(),
         '/restoran': (_) => const KulinerScreen(),
         '/transportasi': (_) => const TransportasiScreen(),
-        '/sewa': (_) => const SewaScreen(),
         '/oleh-oleh': (_) => const OlehOlehScreen(),
-        '/paket': (_) => const PaketScreen(),
       },
 
       // ROUTE DINAMIS
@@ -144,6 +145,7 @@ class MyApp extends StatelessWidget {
                     destination: args['destination'] ?? {},
                     heroTag: args['heroTag'] ?? '',
                     destinasi: args['destinasi'],
+                    location: '',
                   ),
             );
           } else {

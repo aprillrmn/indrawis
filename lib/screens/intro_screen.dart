@@ -77,24 +77,13 @@ class _IntroScreenState extends State<IntroScreen>
     _animController.forward();
   }
 
-  // void _startAutoSlide() {
-  //   _timer?.cancel();
-  //   _timer = Timer.periodic(const Duration(seconds: 3), (timer) {
-  //     int nextPage = (_currentPage + 1) % introData.length;
-  //     _pageController.animateToPage(
-  //       nextPage,
-  //       duration: const Duration(milliseconds: 600),
-  //       curve: Curves.easeInOut,
-  //     );
-  //   });
-  // }
-
   void _onPageChanged(int index) {
     setState(() {
       _currentPage = index;
     });
-    _animController.reset();
-    _animController.forward();
+    _animController
+      ..reset()
+      ..forward();
     // _startAutoSlide();
   }
 
@@ -130,7 +119,6 @@ class _IntroScreenState extends State<IntroScreen>
             ),
           ),
         ),
-
         Positioned.fill(
           child: Container(
             decoration: const BoxDecoration(
@@ -142,7 +130,6 @@ class _IntroScreenState extends State<IntroScreen>
             ),
           ),
         ),
-
         Positioned(
           bottom: 500,
           left: 20,
@@ -217,12 +204,15 @@ class _IntroScreenState extends State<IntroScreen>
             onPageChanged: _onPageChanged,
             itemBuilder: (context, index) => _buildPage(introData[index]),
           ),
+
+          // indikator dan tombol
           Positioned(
             bottom: 80,
             left: 0,
             right: 0,
             child: Column(
               children: [
+                // Dots indicator
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: List.generate(introData.length, (index) {
@@ -242,34 +232,60 @@ class _IntroScreenState extends State<IntroScreen>
                   }),
                 ),
                 const SizedBox(height: 20),
-                ElevatedButton(
-                  onPressed: _nextPage,
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 40,
-                      vertical: 12,
+
+                // JIKA HALAMAN TERAKHIR: tampil 2 tombol, else tombol tunggal
+                if (_currentPage == introData.length - 1)
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      ElevatedButton(
+                        onPressed:
+                            () => Navigator.pushReplacementNamed(
+                              context,
+                              '/home',
+                            ),
+                        style: ElevatedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 24,
+                            vertical: 12,
+                          ),
+                          backgroundColor: Colors.blueAccent.withOpacity(0.8),
+                        ),
+                        child: const Text('Tamu'),
+                      ),
+                      ElevatedButton(
+                        onPressed:
+                            () => Navigator.pushReplacementNamed(
+                              context,
+                              '/login',
+                            ),
+                        style: ElevatedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 24,
+                            vertical: 12,
+                          ),
+                          backgroundColor: Colors.teal.withOpacity(0.8),
+                        ),
+                        child: const Text('Admin'),
+                      ),
+                    ],
+                  )
+                else
+                  ElevatedButton(
+                    onPressed: _nextPage,
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 40,
+                        vertical: 12,
+                      ),
+                      backgroundColor: Colors.blueAccent.withOpacity(0.8),
                     ),
-                    backgroundColor: Colors.blueAccent.withOpacity(0.8),
+                    child: Text(
+                      _currentPage == introData.length - 1 ? 'Mulai' : 'Lanjut',
+                      style: const TextStyle(color: Colors.white),
+                    ),
                   ),
-                  child: Text(
-                    _currentPage == introData.length - 1 ? 'Mulai' : 'Lanjut',
-                    style: const TextStyle(color: Colors.white),
-                  ),
-                ),
               ],
-            ),
-          ),
-          Positioned(
-            top: 40,
-            right: 20,
-            child: TextButton(
-              onPressed: () {
-                Navigator.pushReplacementNamed(context, '/login');
-              },
-              child: const Text(
-                'Skip',
-                style: TextStyle(fontSize: 16, color: Colors.white),
-              ),
             ),
           ),
         ],

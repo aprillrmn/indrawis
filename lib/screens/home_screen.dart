@@ -3,6 +3,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:new_apk/admins/setting_screen.dart';
 import 'package:new_apk/models/edit_profile_screen.dart';
+import 'package:new_apk/screens/destination_detail.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'dart:math';
 
@@ -17,6 +18,7 @@ class _MyHomeScreenState extends State<MyHomeScreen> {
   final supabase = Supabase.instance.client;
   List<dynamic> destinasi = [];
   LatLng? userLocation;
+  Set<Marker> allMarkers = {};
   GoogleMapController? mapController;
   List<dynamic> filteredDestinasi = [];
   TextEditingController searchController = TextEditingController();
@@ -30,9 +32,35 @@ class _MyHomeScreenState extends State<MyHomeScreen> {
 
   Future<void> fetchDestinasi() async {
     final response = await supabase.from('konten').select();
+
     setState(() {
       destinasi = response;
       filteredDestinasi = response;
+
+      allMarkers =
+          response
+              .where(
+                (item) => item['latitude'] != null && item['longitude'] != null,
+              )
+              .map((item) {
+                final lat = item['latitude'];
+                final lng = item['longitude'];
+
+                final latitude =
+                    lat is double ? lat : double.tryParse(lat.toString());
+                final longitude =
+                    lng is double ? lng : double.tryParse(lng.toString());
+
+                if (latitude == null || longitude == null) return null;
+
+                return Marker(
+                  markerId: MarkerId(item['judul']),
+                  position: LatLng(latitude, longitude),
+                  infoWindow: InfoWindow(title: item['judul']),
+                );
+              })
+              .whereType<Marker>()
+              .toSet();
     });
   }
 
@@ -114,16 +142,24 @@ class _MyHomeScreenState extends State<MyHomeScreen> {
 
     return GestureDetector(
       onTap: () {
-        Navigator.pushNamed(
+        print('title: $data.judul ');
+        Navigator.push(
           context,
-          '/detail',
-          arguments: {
-            'title': data['judul'],
-            'description': data['deskripsi'],
-            'imageUrl': data['gambar_url'],
-            'latitude': data['latitude'],
-            'longitude': data['longitude'],
-          },
+          MaterialPageRoute(
+            builder:
+                (context) => DestinationDetailScreen(
+                  kontenId: data['id'].toString(),
+                  title: data['judul'],
+                  description: data['deskripsi'],
+                  imageUrl: data['gambar_url'],
+                  latitude: data['latitude'],
+                  longitude: data['longitude'],
+                  destination: data,
+                  heroTag: data['id'].toString(),
+                  destinasi: data,
+                  location: data['lokasi'] as String,
+                ),
+          ),
         );
       },
       child: SizedBox(
@@ -181,199 +217,215 @@ class _MyHomeScreenState extends State<MyHomeScreen> {
         child:
             userLocation == null
                 ? const Center(child: CircularProgressIndicator())
-                : Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // === HEADER: Logo + Teks + Icon Settings & Profile ===
-                    Container(
-                      decoration: const BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [
-                            Color(0xFF0F2027),
-                            Color(0xFF203A43),
-                            Color(0xFF2C5364),
-                          ],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
-                      ),
-                      padding: const EdgeInsets.symmetric(horizontal: 10),
-                      height: 80,
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          // Logo dan Teks
-                          Row(
-                            children: [
-                              Container(
-                                width: 60,
-                                height: 60,
-                                decoration: const BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  image: DecorationImage(
-                                    image: AssetImage('assets/images/awal.png'),
-                                    fit: BoxFit.cover,
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 10),
-                              const Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'Indramayu',
-                                    style: TextStyle(
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.white,
-                                    ),
-                                  ),
-                                  Text(
-                                    'Wisata',
-                                    style: TextStyle(
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.white70,
-                                    ),
-                                  ),
-                                ],
-                              ),
+                : SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Header
+                      Container(
+                        decoration: const BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              Color(0xFF0F2027),
+                              Color(0xFF203A43),
+                              Color(0xFF2C5364),
                             ],
-                          ),
-
-                          // Icon Setting & Profile
-                          Row(
-                            children: [
-                              IconButton(
-                                icon: const Icon(
-                                  Icons.settings,
-                                  color: Colors.white,
-                                ),
-                                onPressed: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (_) => SettingsScreen(),
-                                    ),
-                                  );
-                                },
-                              ),
-                              IconButton(
-                                icon: const Icon(
-                                  Icons.account_circle,
-                                  color: Colors.white,
-                                ),
-                                onPressed: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (_) => EditProfileScreen(),
-                                    ),
-                                  );
-                                },
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    // Google Map View (fixed height)
-                    SizedBox(
-                      height: 160,
-                      child: GoogleMap(
-                        initialCameraPosition: CameraPosition(
-                          target: userLocation!,
-                          zoom: 14,
-                        ),
-                        markers: {
-                          Marker(
-                            markerId: const MarkerId('userLocation'),
-                            position: userLocation!,
-                            infoWindow: const InfoWindow(title: 'Lokasi Anda'),
-                          ),
-                        },
-                        onMapCreated: (controller) {
-                          mapController = controller;
-                        },
-                      ),
-                    ),
-
-                    // Search Bar
-                    Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 8,
-                      ),
-                      child: TextField(
-                        controller: searchController,
-                        decoration: InputDecoration(
-                          hintText: 'Cari destinasi...',
-                          prefixIcon: const Icon(Icons.search),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
                           ),
                         ),
-                        onChanged: filterDestinasi,
-                      ),
-                    ),
-
-                    const SizedBox(height: 15),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: SizedBox(
-                        height: 150,
-                        child: GridView.count(
-                          crossAxisCount: 4,
-                          physics: const NeverScrollableScrollPhysics(),
-                          childAspectRatio: 1,
-                          crossAxisSpacing: 10,
-                          mainAxisSpacing: 10,
+                        padding: const EdgeInsets.symmetric(horizontal: 10),
+                        height: 80,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            buildMenuIcon(Icons.place, 'Religi'),
-                            buildMenuIcon(Icons.event, 'Aktivitas'),
-                            buildMenuIcon(Icons.hotel, 'Akomodasi'),
-                            buildMenuIcon(Icons.restaurant, 'Kuliner'),
-                            buildMenuIcon(Icons.directions_car, 'Transportasi'),
-                            buildMenuIcon(Icons.pedal_bike, 'Sewa'),
-                            buildMenuIcon(Icons.shopping_cart, 'Oleh-oleh'),
-                            buildMenuIcon(Icons.map, 'Paket'),
+                            Row(
+                              children: [
+                                Container(
+                                  width: 60,
+                                  height: 60,
+                                  decoration: const BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    image: DecorationImage(
+                                      image: AssetImage(
+                                        'assets/images/awal.png',
+                                      ),
+                                      fit: BoxFit.cover,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 10),
+                                const Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Indramayu',
+                                      style: TextStyle(
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                    Text(
+                                      'Wisata',
+                                      style: TextStyle(
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.white70,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                            Row(
+                              children: [
+                                IconButton(
+                                  icon: const Icon(
+                                    Icons.settings,
+                                    color: Colors.white,
+                                  ),
+                                  onPressed: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) => SettingsScreen(),
+                                      ),
+                                    );
+                                  },
+                                ),
+                                IconButton(
+                                  icon: const Icon(
+                                    Icons.account_circle,
+                                    color: Colors.white,
+                                  ),
+                                  onPressed: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) => EditProfileScreen(),
+                                      ),
+                                    );
+                                  },
+                                ),
+                              ],
+                            ),
                           ],
                         ),
                       ),
-                    ),
-                    const SizedBox(height: 45),
-                    const Padding(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 8,
-                      ),
-                      child: Text(
-                        'Rekomendasi Destinasi',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
 
-                    SizedBox(
-                      height: 170,
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        child: ListView.separated(
-                          scrollDirection: Axis.horizontal,
-                          itemCount: filteredDestinasi.length,
-                          separatorBuilder:
-                              (_, __) => const SizedBox(width: 12),
-                          itemBuilder: (context, index) {
-                            return buildDestinasiCard(filteredDestinasi[index]);
+                      // Google Map
+                      SizedBox(
+                        height: 160,
+                        child: GoogleMap(
+                          initialCameraPosition: CameraPosition(
+                            target: userLocation!,
+                            zoom: 14,
+                          ),
+                          markers: {
+                            Marker(
+                              markerId: const MarkerId('userLocation'),
+                              position: userLocation!,
+                              infoWindow: const InfoWindow(
+                                title: 'Lokasi Anda',
+                              ),
+                            ),
+                            ...allMarkers, // ← Tambahkan semua marker destinasi
+                          },
+                          onMapCreated: (controller) {
+                            mapController = controller;
                           },
                         ),
                       ),
-                    ),
-                  ],
+
+                      // Search Bar
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 8,
+                        ),
+                        child: TextField(
+                          controller: searchController,
+                          decoration: InputDecoration(
+                            hintText: 'Cari destinasi...',
+                            prefixIcon: const Icon(Icons.search),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          onChanged: filterDestinasi,
+                        ),
+                      ),
+
+                      const SizedBox(height: 15),
+
+                      // Menu Grid
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: SizedBox(
+                          height: 150,
+                          child: GridView.count(
+                            crossAxisCount: 4,
+                            physics: const NeverScrollableScrollPhysics(),
+                            shrinkWrap: true,
+                            childAspectRatio: 1,
+                            crossAxisSpacing: 10,
+                            mainAxisSpacing: 10,
+                            children: [
+                              buildMenuIcon(Icons.place, 'Religi'),
+                              buildMenuIcon(Icons.event, 'Aktivitas'),
+                              buildMenuIcon(Icons.hotel, 'Akomodasi'),
+                              buildMenuIcon(Icons.restaurant, 'Kuliner'),
+                              buildMenuIcon(
+                                Icons.directions_car,
+                                'Transportasi',
+                              ),
+                              buildMenuIcon(Icons.shopping_cart, 'Oleh-oleh'),
+                            ],
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(height: 25),
+
+                      // Rekomendasi Header
+                      const Padding(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 8,
+                        ),
+                        child: Text(
+                          'Rekomendasi Destinasi',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+
+                      // Rekomendasi List
+                      SizedBox(
+                        height: 170,
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          child: ListView.separated(
+                            scrollDirection: Axis.horizontal,
+                            itemCount: filteredDestinasi.length,
+                            separatorBuilder:
+                                (_, __) => const SizedBox(width: 12),
+                            itemBuilder: (context, index) {
+                              return buildDestinasiCard(
+                                filteredDestinasi[index],
+                              );
+                            },
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(height: 20),
+                    ],
+                  ),
                 ),
       ),
     );

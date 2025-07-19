@@ -1,3 +1,5 @@
+import 'package:intl/intl.dart';
+
 class CommentModel {
   final String id;
   final String nama;
@@ -14,14 +16,37 @@ class CommentModel {
   });
 
   factory CommentModel.fromJson(Map<String, dynamic> json) {
+    String raw = json['tanggal'] as String;
+    String withoutOffset;
+    if (raw.contains('+')) {
+      withoutOffset = raw.substring(0, raw.indexOf('+'));
+    } else if (raw.contains('-') && raw.lastIndexOf('-') > 10) {
+      withoutOffset = raw.substring(0, raw.lastIndexOf('-'));
+    } else {
+      withoutOffset = raw;
+    }
+    withoutOffset = withoutOffset.replaceFirst(' ', 'T');
+    final parsed = DateTime.parse(withoutOffset);
+
     return CommentModel(
-      id:
-          json['id']
-              .toString(), // penting supaya aman jika id bertipe int atau string/uuid
+      id: json['id'].toString(),
       nama: json['nama'] ?? '',
       isi: json['isi'] ?? '',
-      tanggal: DateTime.parse(json['tanggal']),
+      tanggal: parsed,
       foto: json['foto'] ?? '',
     );
+  }
+
+  String get formattedTanggal {
+    final raw = tanggal;
+    final display = DateTime(
+      raw.year,
+      raw.month,
+      raw.day,
+      raw.hour,
+      raw.minute,
+      raw.second,
+    );
+    return DateFormat('dd MMM yyyy, HH:mm', 'id_ID').format(display);
   }
 }
