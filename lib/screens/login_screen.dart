@@ -80,10 +80,7 @@ class _LoginScreenState extends State<LoginScreen> {
           (route) => false,
         );
       } else {
-        Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(builder: (_) => const MyHomeScreen()),
-          (route) => false,
-        );
+        Navigator.pop(context, true); 
       }
     } on AuthException catch (error) {
       if (!mounted) return;

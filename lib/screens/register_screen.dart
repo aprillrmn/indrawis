@@ -32,7 +32,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
       if (!mounted) return;
       _showSuccessDialog("Registrasi berhasil!\nSilakan verifikasi email.");
-      Navigator.pop(context);
+      Navigator.pop(context, true);
     } on AuthException catch (error) {
       if (!mounted) return;
       _showErrorSnackBar(error.message);

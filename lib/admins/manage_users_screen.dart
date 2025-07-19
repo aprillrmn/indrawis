@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:new_apk/locations/map_picker_screen.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -79,6 +80,7 @@ class _ManageCategoriesScreenState extends State<ManageCategoriesScreen> {
     String name = '', desc = '';
     File? imageFile;
     double? lat, lng;
+    int kategoriGrupId = 0;
 
     await showModalBottomSheet(
       context: context,
@@ -121,6 +123,33 @@ class _ManageCategoriesScreenState extends State<ManageCategoriesScreen> {
                           labelText: 'Deskripsi',
                         ),
                         onSaved: (v) => desc = v?.trim() ?? '',
+                      ),
+                      DropdownButtonFormField<int>(
+                        decoration: const InputDecoration(
+                          labelText: 'Kategori Grup ID',
+                        ),
+                        value: kategoriGrupId == 0 ? null : kategoriGrupId,
+                        items:
+                            [1, 2, 3, 4].map((id) {
+                              return DropdownMenuItem<int>(
+                                value: id,
+                                child: Text('Grup $id'),
+                              );
+                            }).toList(),
+                        onChanged: (value) {
+                          if (value != null) {
+                            setState(() {
+                              kategoriGrupId = value;
+                            });
+                          }
+                        },
+                        validator: (value) {
+                          if (value == null) return 'Pilih salah satu grup';
+                          return null;
+                        },
+                        onSaved: (value) {
+                          kategoriGrupId = value ?? 0;
+                        },
                       ),
                       GestureDetector(
                         onTap: () async {
@@ -246,6 +275,7 @@ class _ManageCategoriesScreenState extends State<ManageCategoriesScreen> {
                                 'gambar_url': imageUrl,
                                 'latitude': lat,
                                 'longitude': lng,
+                                'kategori_grup_id': kategoriGrupId,
                               });
                               _showTopSuccess('Kategori berhasil ditambahkan');
                               await _loadCategories();

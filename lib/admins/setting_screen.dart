@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:new_apk/admins/ChangePasswordScreen.dart';
+import 'package:new_apk/screens/intro_screen.dart';
 import 'package:new_apk/services/auth_service.dart';
-import 'package:new_apk/screens/login_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -143,7 +143,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   if (!mounted) return;
 
                   navigator.pushAndRemoveUntil(
-                    MaterialPageRoute(builder: (_) => const LoginScreen()),
+                    MaterialPageRoute(builder: (_) => const IntroScreen()),
                     (route) => false,
                   );
                 },

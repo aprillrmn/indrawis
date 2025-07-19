@@ -5,24 +5,26 @@ import 'package:url_launcher/url_launcher.dart';
 import 'dart:math';
 
 class DestinationDetailScreen extends StatefulWidget {
+  final String kontenId;
   final String title;
   final String description;
   final String imageUrl;
   final double latitude;
   final double longitude;
-  final int kontenId;
+  final String location;
 
   const DestinationDetailScreen({
     Key? key,
+    required this.kontenId,
     required this.title,
     required this.description,
     required this.imageUrl,
     required this.latitude,
     required this.longitude,
-    required this.kontenId,
     required Map destination,
     required String heroTag,
     required destinasi,
+    required this.location,
   }) : super(key: key);
 
   @override
@@ -46,6 +48,7 @@ class _DestinationDetailScreenState extends State<DestinationDetailScreen> {
   void initState() {
     super.initState();
     fetchNearbyPlaces();
+    // _fetchHistory();
   }
 
   Future<void> fetchNearbyPlaces() async {
@@ -153,14 +156,10 @@ class _DestinationDetailScreenState extends State<DestinationDetailScreen> {
                 ),
                 const SizedBox(height: 20),
                 ElevatedButton.icon(
-                  onPressed: () {
-                    Navigator.pop(context);
-                    _openInMaps(
-                      lat: (place['latitude'] as num?)?.toDouble(),
-                      lng: (place['longitude'] as num?)?.toDouble(),
-                    );
+                  onPressed: () async {
+                    _openInMaps();
                   },
-                  icon: const Icon(Icons.map),
+                  icon: const Icon(Icons.directions),
                   label: const Text('Buka di Google Maps'),
                   style: ElevatedButton.styleFrom(
                     minimumSize: const Size.fromHeight(48),
@@ -174,10 +173,66 @@ class _DestinationDetailScreenState extends State<DestinationDetailScreen> {
     );
   }
 
+  Future<void> _handleOpenMaps() async {
+    final user = supabase.auth.currentUser;
+    if (user == null) {
+      // Jika belum login, minta login dulu
+      final wantLogin = await showDialog<bool>(
+        context: context,
+        builder:
+            (_) => AlertDialog(
+              title: const Text('Login Diperlukan'),
+              content: const Text(
+                'Anda perlu login untuk mencatat kunjungan. Mau login sekarang?',
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context, false),
+                  child: const Text('Tidak'),
+                ),
+                ElevatedButton(
+                  onPressed: () => Navigator.pop(context, true),
+                  child: const Text('Ya'),
+                ),
+              ],
+            ),
+      );
+      if (wantLogin == true) {
+        final result = await Navigator.pushNamed(context, '/login');
+        if (result != true) return;
+      } else {
+        return;
+      }
+    }
+
+    // Jika sudah login, catat kunjungan
+    final now = DateTime.now();
+    await supabase.from('aktivitas').insert({
+      'user_id': supabase.auth.currentUser!.id,
+      'note': widget.title,
+      'location': widget.location,
+      'tanggal': now.toIso8601String().split('T').first,
+      'visited_at': now.toIso8601String(),
+    });
+
+    // Lalu buka Google Maps
+    final uri = Uri.parse(
+      'https://www.google.com/maps/dir/?api=1&destination=${widget.latitude},${widget.longitude}&travelmode=driving',
+    );
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Gagal membuka Google Maps')),
+      );
+    }
+  }
+
   Future<List<CommentModel>> fetchKomentar() async {
     final response = await supabase
         .from('komentar')
         .select('id, nama, isi, tanggal, foto')
+        .eq('konten_id', widget.kontenId)
         .order('tanggal', ascending: false);
     return (response as List)
         .map((e) => CommentModel.fromJson(e as Map<String, dynamic>))
@@ -207,9 +262,11 @@ class _DestinationDetailScreenState extends State<DestinationDetailScreen> {
         'isi': isiKomentar,
         'tanggal': DateTime.now().toIso8601String(),
         'foto': foto,
+        'konten_id': widget.kontenId,
       });
 
       _commentController.clear();
+      setState(() {});
     } catch (e) {
       print('Gagal mengirim komentar: $e');
     }
@@ -376,6 +433,13 @@ class _DestinationDetailScreenState extends State<DestinationDetailScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
+      // floatingActionButton: FloatingActionButton(
+      //   onPressed: () async {
+      //     await _catatKunjungan("Pantai Balongan", "Indramayu, Jawa Barat");
+      //   },
+      //   backgroundColor: Colors.deepOrange,
+      //   child: const Icon(Icons.add_location_alt),
+      // ),
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(kToolbarHeight),
         child: AppBar(
@@ -430,26 +494,55 @@ class _DestinationDetailScreenState extends State<DestinationDetailScreen> {
                       child: Center(child: Icon(Icons.broken_image, size: 48)),
                     ),
               ),
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 8,
+              TextButton.icon(
+                onPressed: () async {
+                  final user = supabase.auth.currentUser;
+                  if (user == null) {
+                    final result = await showDialog<bool>(
+                      context: context,
+                      builder:
+                          (context) => AlertDialog(
+                            title: const Text('Login Diperlukan'),
+                            content: const Text(
+                              'Anda perlu login terlebih dahulu untuk memberikan komentar. Ingin login sekarang?',
+                            ),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(context, false),
+                                child: const Text('Tidak'),
+                              ),
+                              ElevatedButton(
+                                onPressed: () => Navigator.pop(context, true),
+                                child: const Text('Ya'),
+                              ),
+                            ],
+                          ),
+                    );
+
+                    // Jika pengguna memilih "Ya", navigasi ke login dan tunggu hasilnya
+                    if (result == true) {
+                      final loggedIn = await Navigator.pushNamed(
+                        context,
+                        '/login',
+                      );
+
+                      // Jika berhasil login, tampilkan modal komentar
+                      if (loggedIn == true) {
+                        _showCommentsModal();
+                      }
+                    }
+                  } else {
+                    _showCommentsModal();
+                  }
+                },
+                icon: const Icon(
+                  Icons.comment,
+                  color: Color.fromARGB(255, 0, 0, 0),
+                  size: 24,
                 ),
-                child: Row(
-                  children: [
-                    TextButton.icon(
-                      onPressed: _showCommentsModal,
-                      icon: const Icon(
-                        Icons.comment,
-                        color: Colors.grey,
-                        size: 24,
-                      ),
-                      label: const Text(
-                        'Komentar',
-                        style: TextStyle(color: Colors.grey),
-                      ),
-                    ),
-                  ],
+                label: const Text(
+                  'Komentar',
+                  style: TextStyle(color: Color.fromARGB(255, 0, 0, 0)),
                 ),
               ),
               Padding(
@@ -467,7 +560,7 @@ class _DestinationDetailScreenState extends State<DestinationDetailScreen> {
                     Text(widget.description, style: theme.textTheme.bodyMedium),
                     const SizedBox(height: 24),
                     ElevatedButton.icon(
-                      onPressed: () => _openInMaps(),
+                      onPressed: _handleOpenMaps,
                       icon: const Icon(Icons.directions),
                       label: const Text('Buka di Google Maps'),
                       style: ElevatedButton.styleFrom(
