@@ -4,28 +4,33 @@ class AngkotListScreen extends StatelessWidget {
   final List<Map<String, String>> trayekList = [
     {
       'kode': 'Angkot 01',
-      'rute': 'Terminal Indramayu – Pasar Baru',
-      'jam': '06.00 - 18.00 WIB',
+      'rute':
+          'Terminal Kota – Sudirman - Panjaitan - Suprapto - Tanjung Pura - Olahraga - Gatot Subroto (Bunderan Kijang) - Singaraja - Kec. Balongan - Wismajati - Balongan - Tegalurung - Singaraja - Sudirman - Terminal (PP)',
+      'jam': '05.00 - 16.00 WIB',
     },
     {
       'kode': 'Angkot 02',
-      'rute': 'Terminal Indramayu – Jatibarang',
-      'jam': '06.00 - 17.30 WIB',
+      'rute':
+          'Terminal – Gatot Subroto - Suprapto - Ahmad Yani - Kartini - S. Parman - Siliwangi - Yos Sudarso - Sudirman - Terminal (PP)',
+      'jam': '05.00 - 16.00 WIB',
     },
     {
       'kode': 'Angkot 03',
-      'rute': 'Jatibarang – Haurgeulis',
-      'jam': '06.30 - 17.00 WIB',
+      'rute':
+          'Terminal Kota – Sudirman - Yos Sudarso - Siliwangi - M.T Haryono - Gatot Subroto - Sudirman - Terminal (PP)',
+      'jam': '05.00 - 16.00 WIB',
     },
     {
       'kode': 'Angkot 04',
-      'rute': 'Karangampel – Lohbener',
-      'jam': '07.00 - 18.00 WIB',
+      'rute':
+          'Terminal Kota – Sudirman - Tanjung Pura - Suprapto - Gatot Subroto - M.T Haryono - Perjuangan - Suprapto - Cimanuk - Bima Basuki - Panjaitan - Terminal (PP)',
+      'jam': '05.00 - 16.00 WIB',
     },
     {
       'kode': 'Angkot 05',
-      'rute': 'Sindang – Krangkeng',
-      'jam': '05.30 - 17.30 WIB',
+      'rute':
+          'Terminal – Gatot Subroto - Pasar Baru - Pasarean - Suprapto - Cimanuk - S. Parman - Yos Sudarso - Karangsong - Pahlawan - Terminal (PP)',
+      'jam': '05.00 - 16.00 WIB',
     },
   ];
 

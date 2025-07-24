@@ -48,7 +48,6 @@ class _DestinationDetailScreenState extends State<DestinationDetailScreen> {
   void initState() {
     super.initState();
     fetchNearbyPlaces();
-    // _fetchHistory();
   }
 
   Future<void> fetchNearbyPlaces() async {
@@ -102,22 +101,6 @@ class _DestinationDetailScreenState extends State<DestinationDetailScreen> {
 
   double _degToRad(double deg) => deg * (pi / 180);
 
-  Future<void> _openInMaps({double? lat, double? lng}) async {
-    final destLat = lat ?? widget.latitude;
-    final destLng = lng ?? widget.longitude;
-    final uri = Uri.parse(
-      'https://www.google.com/maps/dir/?api=1&destination=$destLat,$destLng&travelmode=driving',
-    );
-
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Gagal membuka Google Maps')),
-      );
-    }
-  }
-
   void _showPlaceDetail(Map<String, dynamic> place) {
     showModalBottomSheet(
       context: context,
@@ -157,7 +140,7 @@ class _DestinationDetailScreenState extends State<DestinationDetailScreen> {
                 const SizedBox(height: 20),
                 ElevatedButton.icon(
                   onPressed: () async {
-                    _openInMaps();
+                    _handleOpenMaps();
                   },
                   icon: const Icon(Icons.directions),
                   label: const Text('Buka di Google Maps'),
@@ -176,7 +159,6 @@ class _DestinationDetailScreenState extends State<DestinationDetailScreen> {
   Future<void> _handleOpenMaps() async {
     final user = supabase.auth.currentUser;
     if (user == null) {
-      // Jika belum login, minta login dulu
       final wantLogin = await showDialog<bool>(
         context: context,
         builder:
@@ -205,7 +187,6 @@ class _DestinationDetailScreenState extends State<DestinationDetailScreen> {
       }
     }
 
-    // Jika sudah login, catat kunjungan
     final now = DateTime.now();
     await supabase.from('aktivitas').insert({
       'user_id': supabase.auth.currentUser!.id,
@@ -215,7 +196,6 @@ class _DestinationDetailScreenState extends State<DestinationDetailScreen> {
       'visited_at': now.toIso8601String(),
     });
 
-    // Lalu buka Google Maps
     final uri = Uri.parse(
       'https://www.google.com/maps/dir/?api=1&destination=${widget.latitude},${widget.longitude}&travelmode=driving',
     );
@@ -433,13 +413,6 @@ class _DestinationDetailScreenState extends State<DestinationDetailScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
-      // floatingActionButton: FloatingActionButton(
-      //   onPressed: () async {
-      //     await _catatKunjungan("Pantai Balongan", "Indramayu, Jawa Barat");
-      //   },
-      //   backgroundColor: Colors.deepOrange,
-      //   child: const Icon(Icons.add_location_alt),
-      // ),
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(kToolbarHeight),
         child: AppBar(
