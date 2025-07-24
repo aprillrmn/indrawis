@@ -62,6 +62,19 @@ class _CategoryScreenState extends State<CategoryScreen> {
 
       _items = List<Map<String, dynamic>>.from(data);
 
+      // Ambil konten_id dari tabel konten berdasarkan kategori.id
+      for (var d in _items) {
+        final konten =
+            await Supabase.instance.client
+                .from('konten')
+                .select('id')
+                .eq('kategori_id', d['id']) // TIDAK PERLU toString()
+                .limit(1)
+                .maybeSingle();
+
+        d['konten_id'] = konten != null ? konten['id'] : null;
+      }
+
       if (_currentPosition != null) {
         for (var d in _items) {
           d['distance'] = Geolocator.distanceBetween(
@@ -144,7 +157,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
                             'longitude': d['longitude'],
                             'heroTag': '',
                             'destination': d,
-                            'kontenId': d['id'],
+                            'kontenId': d['konten_id'],
                             'destinasi': d,
                           },
                         ),

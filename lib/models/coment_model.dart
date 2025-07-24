@@ -6,6 +6,8 @@ class CommentModel {
   final String isi;
   final DateTime tanggal;
   final String foto;
+  final String? parentId;
+  List<CommentModel> children; // untuk threaded reply
 
   CommentModel({
     required this.id,
@@ -13,6 +15,8 @@ class CommentModel {
     required this.isi,
     required this.tanggal,
     required this.foto,
+    this.parentId,
+    this.children = const [],
   });
 
   factory CommentModel.fromJson(Map<String, dynamic> json) {

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:new_apk/admins/setting_screen.dart';
+import 'package:new_apk/categoris/kategori_service.dart';
 import 'package:new_apk/models/edit_profile_screen.dart';
 import 'package:new_apk/screens/destination_detail.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -21,12 +22,15 @@ class _MyHomeScreenState extends State<MyHomeScreen> {
   Set<Marker> allMarkers = {};
   GoogleMapController? mapController;
   List<dynamic> filteredDestinasi = [];
+  // List<Map<String, dynamic>> kategoriList = [];
+  // List<Map<String, dynamic>> kulinerList = [];
   TextEditingController searchController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
     fetchDestinasi();
+    // _loadData();
     getUserLocation();
   }
 
@@ -63,6 +67,26 @@ class _MyHomeScreenState extends State<MyHomeScreen> {
               .toSet();
     });
   }
+
+  // Future<void> _loadData() async {
+  //   final pos = await Geolocator.getCurrentPosition(
+  //     desiredAccuracy: LocationAccuracy.high,
+  //   );
+
+  //   final penginapan = await fetchKategoriByGrupId(
+  //     2,
+  //     pos,
+  //   ); // Misal 2 untuk penginapan
+  //   final kuliner = await fetchKategoriByGrupId(
+  //     3,
+  //     pos,
+  //   ); // Misal 3 untuk kuliner
+
+  //   setState(() {
+  //     kategoriList = penginapan;
+  //     kulinerList = kuliner;
+  //   });
+  // }
 
   Future<void> getUserLocation() async {
     bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
@@ -149,15 +173,18 @@ class _MyHomeScreenState extends State<MyHomeScreen> {
             builder:
                 (context) => DestinationDetailScreen(
                   kontenId: data['id'].toString(),
-                  title: data['judul'],
-                  description: data['deskripsi'],
-                  imageUrl: data['gambar_url'],
+                  title:
+                      data['judul']?.toString() ??
+                      data['nama']?.toString() ??
+                      'Tanpa Judul',
+                  description: data['deskripsi'].toString(),
+                  imageUrl: data['gambar_url'].toString(),
                   latitude: data['latitude'],
                   longitude: data['longitude'],
                   destination: data,
                   heroTag: data['id'].toString(),
                   destinasi: data,
-                  location: data['lokasi'] as String,
+                  location: data['lokasi'].toString(),
                 ),
           ),
         );
@@ -186,7 +213,9 @@ class _MyHomeScreenState extends State<MyHomeScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      data['judul'],
+                      data['judul']?.toString() ??
+                          data['nama']?.toString() ??
+                          'Tanpa Judul',
                       style: const TextStyle(fontWeight: FontWeight.bold),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -212,7 +241,7 @@ class _MyHomeScreenState extends State<MyHomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color.fromRGBO(255, 255, 255, 1),
       body: SafeArea(
         child:
             userLocation == null
@@ -359,7 +388,21 @@ class _MyHomeScreenState extends State<MyHomeScreen> {
                       ),
 
                       const SizedBox(height: 15),
+                      const Padding(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 8,
+                        ),
+                        child: Text(
+                          'Menu Kategori',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
 
+                      const SizedBox(height: 15),
                       // Menu Grid
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -374,37 +417,29 @@ class _MyHomeScreenState extends State<MyHomeScreen> {
                             mainAxisSpacing: 10,
                             children: [
                               buildMenuIcon(Icons.place, 'Religi'),
-                              buildMenuIcon(Icons.event, 'Aktivitas'),
                               buildMenuIcon(Icons.hotel, 'Akomodasi'),
                               buildMenuIcon(Icons.restaurant, 'Kuliner'),
-                              buildMenuIcon(
-                                Icons.directions_car,
-                                'Transportasi',
-                              ),
                               buildMenuIcon(Icons.shopping_cart, 'Oleh-oleh'),
+                              buildMenuIcon(Icons.event, 'Aktivitas'),
                             ],
                           ),
                         ),
                       ),
 
                       const SizedBox(height: 25),
-
-                      // Rekomendasi Header
                       const Padding(
                         padding: EdgeInsets.symmetric(
                           horizontal: 16,
                           vertical: 8,
                         ),
                         child: Text(
-                          'Rekomendasi Destinasi',
+                          'Rekomendasi Semua Destinasi',
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
                       ),
-
-                      // Rekomendasi List
                       SizedBox(
                         height: 170,
                         child: Padding(
@@ -423,6 +458,67 @@ class _MyHomeScreenState extends State<MyHomeScreen> {
                         ),
                       ),
 
+                      // const SizedBox(height: 20),
+                      // const Padding(
+                      //   padding: EdgeInsets.symmetric(
+                      //     horizontal: 16,
+                      //     vertical: 8,
+                      //   ),
+                      //   child: Text(
+                      //     'Rekomendasi Akomodasi',
+                      //     style: TextStyle(
+                      //       fontSize: 16,
+                      //       fontWeight: FontWeight.bold,
+                      //     ),
+                      //   ),
+                      // ),
+                      // SizedBox(
+                      //   height: 170,
+                      //   child: Padding(
+                      //     padding: const EdgeInsets.symmetric(horizontal: 16),
+                      //     child: ListView.separated(
+                      //       scrollDirection: Axis.horizontal,
+                      //       itemCount: kategoriList.length,
+                      //       separatorBuilder:
+                      //           (_, __) => const SizedBox(width: 12),
+                      //       itemBuilder: (context, index) {
+                      //         return buildDestinasiCard(kategoriList[index]);
+                      //       },
+                      //     ),
+                      //   ),
+                      // ),
+
+                      // const SizedBox(height: 20),
+                      // const Padding(
+                      //   padding: EdgeInsets.symmetric(
+                      //     horizontal: 16,
+                      //     vertical: 8,
+                      //   ),
+                      //   child: Text(
+                      //     'Rekomendasi Destinasi Kuliner',
+                      //     style: TextStyle(
+                      //       fontSize: 16,
+                      //       fontWeight: FontWeight.bold,
+                      //     ),
+                      //   ),
+                      // ),
+
+                      // // Kuliner List
+                      // SizedBox(
+                      //   height: 170,
+                      //   child: Padding(
+                      //     padding: const EdgeInsets.symmetric(horizontal: 16),
+                      //     child: ListView.separated(
+                      //       scrollDirection: Axis.horizontal,
+                      //       itemCount: kulinerList.length,
+                      //       separatorBuilder:
+                      //           (_, __) => const SizedBox(width: 12),
+                      //       itemBuilder: (context, index) {
+                      //         return buildDestinasiCard(kulinerList[index]);
+                      //       },
+                      //     ),
+                      //   ),
+                      // ),
                       const SizedBox(height: 20),
                     ],
                   ),

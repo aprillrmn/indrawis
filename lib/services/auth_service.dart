@@ -55,9 +55,9 @@ class AuthService {
   }
 
   Future<void> logout() async {
-    await supabase.auth.signOut(); // logout dari Supabase
+    await supabase.auth.signOut();
     final prefs = await SharedPreferences.getInstance();
-    await prefs.clear(); // hapus semua data local
+    await prefs.clear(); 
     print("DEBUG -> Logout selesai, session dihapus.");
   }
 

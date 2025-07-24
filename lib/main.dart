@@ -30,7 +30,6 @@ import 'package:new_apk/admins/ChangePasswordScreen.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  //date catatan kunjungan
   await initializeDateFormatting('id_ID', null);
 
   await Supabase.initialize(
@@ -95,7 +94,7 @@ class MyApp extends StatelessWidget {
       // ROUTES
       initialRoute: '/',
       routes: {
-        '/': (_) => const LogoScreen(), // Logo dulu
+        '/': (_) => const LogoScreen(),
         '/splash': (_) => const SplashScreen(),
         '/login': (_) => const LoginScreen(),
         '/register': (_) => const RegisterScreen(),
@@ -127,7 +126,6 @@ class MyApp extends StatelessWidget {
         '/oleh-oleh': (_) => const OlehOlehScreen(),
       },
 
-      // ROUTE DINAMIS
       onGenerateRoute: (settings) {
         if (settings.name == '/detail') {
           final args = settings.arguments;
@@ -141,7 +139,7 @@ class MyApp extends StatelessWidget {
                     imageUrl: args['imageUrl']?.toString() ?? '',
                     latitude: (args['latitude'] ?? 0.0).toDouble(),
                     longitude: (args['longitude'] ?? 0.0).toDouble(),
-                    kontenId: args['kontenId'] ?? 0,
+                    kontenId: (args['kontenId'] ?? 0).toString(),
                     destination: args['destination'] ?? {},
                     heroTag: args['heroTag'] ?? '',
                     destinasi: args['destinasi'],
